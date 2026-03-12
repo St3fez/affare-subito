@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Affare Subito",
+    "slug": "affare-subito",
+    "version": "1.0.0",
+    "scheme": "affaresubito",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f5efe6"
+    },
+    "plugins": [
+      "expo-speech-recognition"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#f5efe6",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.st3fez.affaresubito"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

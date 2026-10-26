@@ -13,7 +13,6 @@
       "backgroundColor": "#f5efe6"
     },
     "plugins": [
-      "expo-speech-recognition",
       "expo-iap"
     ],
     "ios": {

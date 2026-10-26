@@ -130,11 +130,11 @@
         <div class="eyebrow">Privacy Policy</div>
         <h1>Affare Subito</h1>
         <p>
-          Questa informativa descrive come l'app Affare Subito tratta i dati quando usi funzioni di analisi
-          immobiliare, OCR da screenshot, compilazione guidata e dettatura vocale.
+          Questa informativa descrive come l'app Affare Subito tratta i dati quando analizzi un annuncio immobiliare:
+          lettura della pagina, calcolo dei costi e del rendimento, archivio delle analisi e contributo annuale.
         </p>
         <p class="meta">
-          Ultimo aggiornamento: <span class="strong">12 marzo 2026</span><br>
+          Ultimo aggiornamento: <span class="strong">26 ottobre 2026</span><br>
           Pacchetto Android: <span class="strong">com.st3fez.affaresubito</span>
         </p>
       </header>
@@ -142,52 +142,50 @@
       <section>
         <h2>Titolare e contatti</h2>
         <p>
-          Il riferimento pubblico del progetto e dei contatti e disponibile qui:
+          Il riferimento pubblico del progetto e dei contatti è disponibile qui:
           <a href="https://github.com/St3fez/affare-subito">https://github.com/St3fez/affare-subito</a>.
           Se hai richieste relative alla privacy, puoi usare quel profilo/repository come canale di contatto pubblico.
         </p>
       </section>
 
       <section>
-        <h2>Quali dati puo trattare l'app</h2>
+        <h2>Quali dati può trattare l'app</h2>
         <ul>
-          <li>Testi di annunci, note e dati immobiliari inseriti manualmente dall'utente.</li>
-          <li>Screenshot o immagini scelti dall'utente dalla libreria del dispositivo per l'OCR.</li>
-          <li>Trascrizioni vocali ottenute tramite i servizi di riconoscimento vocale del dispositivo.</li>
-          <li>Impostazioni dell'app, bozze salvate, analisi archiviate, lingua e preferenze operative.</li>
-          <li>API key e modello AI configurati dall'utente per l'estrazione AI remota opzionale.</li>
-          <li>Link di annunci inseriti dall'utente per leggere la pagina e provare l'estrazione dei dati.</li>
-          <li>Citta e Paese inseriti dall'utente per recuperare dati immobiliari e macroeconomici di supporto.</li>
+          <li>Il link dell'annuncio che incolli e il contenuto della pagina di quell'annuncio, letto sul tuo telefono.</li>
+          <li>Il testo dell'annuncio, se scegli di incollarlo.</li>
+          <li>I dati che inserisci a mano: prezzo, metri quadri, comune, provincia, zona, stato dell'immobile e le ipotesi che modifichi.</li>
+          <li>Le analisi salvate nell'archivio, l'elenco degli annunci già analizzati e la scadenza del contributo.</li>
         </ul>
+        <p>L'app non chiede account, nome, email, posizione, foto, contatti né microfono.</p>
       </section>
 
       <section>
         <h2>Permessi richiesti</h2>
         <ul>
-          <li><span class="strong">Microfono</span>: serve per la dettatura e l'assistente vocale.</li>
-          <li><span class="strong">Foto e file multimediali</span>: serve per selezionare screenshot da analizzare.</li>
-          <li><span class="strong">Internet</span>: serve per chiamate AI opzionali, lettura link annunci e dati di mercato.</li>
+          <li><span class="strong">Internet</span>: serve ad aprire la pagina dell'annuncio e a comunicare con Google Play per il contributo.</li>
         </ul>
       </section>
 
       <section>
         <h2>Come vengono usati i dati</h2>
         <ul>
-          <li>Per compilare, analizzare e salvare schede immobiliari direttamente sul dispositivo.</li>
-          <li>Per estrarre testo da screenshot con OCR locale sul dispositivo.</li>
-          <li>Per usare la dettatura tramite il servizio vocale disponibile sul telefono.</li>
-          <li>Per recuperare contenuti da link di annunci che l'utente incolla volontariamente.</li>
-          <li>Per scaricare dati di supporto da fonti pubbliche quando l'utente chiede aggiornamenti di mercato.</li>
-          <li>Per inviare testo e immagini all'API OpenAI solo se l'utente abilita l'estrazione AI remota con una propria chiave API.</li>
+          <li>Per leggere prezzo, metri quadri e altri dati dalla pagina dell'annuncio, direttamente sul dispositivo.</li>
+          <li>Per calcolare costi di acquisto, confronto con i valori di mercato, rata del mutuo e resa dei diversi usi dell'immobile, direttamente sul dispositivo.</li>
+          <li>Per salvare le analisi nell'archivio e contare le analisi gratuite, direttamente sul dispositivo.</li>
+          <li>Per sapere se il contributo annuale è attivo.</li>
         </ul>
+        <p>
+          L'app non invia l'annuncio, il testo o i tuoi dati a server dell'autore né a servizi di intelligenza artificiale.
+          I valori di mercato sono inclusi nell'app e non vengono scaricati.
+        </p>
       </section>
 
       <section>
         <h2>Dove vengono conservati i dati</h2>
         <p>
-          L'app salva localmente sul dispositivo, tramite storage locale dell'app, le impostazioni, le bozze,
-          le analisi archiviate, la lingua e l'eventuale chiave API inserita dall'utente. L'app non crea account
-          utente interni e, dal codice dell'app, non risultano SDK pubblicitari o analytics dedicati.
+          L'app salva localmente sul dispositivo, tramite lo storage dell'app, le analisi archiviate, l'elenco degli annunci
+          già analizzati e la scadenza del contributo. L'app non crea account utente e, dal codice dell'app, non risultano
+          SDK pubblicitari o analytics dedicati.
         </p>
       </section>
 
@@ -195,61 +193,76 @@
         <h2>Servizi terzi coinvolti</h2>
         <ul>
           <li>
-            <span class="strong">OpenAI</span>:
-            testo e immagini vengono inviati a <code>https://api.openai.com/v1/responses</code> solo per la funzione
-            opzionale di estrazione AI remota attivata dall'utente.
+            <span class="strong">Siti degli annunci</span>:
+            l'app apre la pagina dell'annuncio in un browser integrato, come farebbe il tuo browser. Il sito dell'annuncio
+            vede la visita (per esempio il tuo indirizzo IP) e può salvare cookie, che restano soggetti alla sua informativa;
+            se la pagina mostra una richiesta di consenso ai cookie, rispondi tu.
           </li>
           <li>
-            <span class="strong">Servizi vocali del dispositivo / Google</span>:
-            usati per il riconoscimento vocale quando l'utente attiva il microfono.
+            <span class="strong">Google Play</span>:
+            gestisce il pagamento del contributo da 0,99 € e comunica all'app se è attivo. L'app non vede i dati di pagamento.
           </li>
           <li>
-            <span class="strong">Siti di annunci e fonti pubbliche</span>:
-            l'app puo contattare il sito dell'annuncio indicato dall'utente e fonti come Numbeo, BCE ed
-            World Bank per recuperare dati di supporto.
+            <span class="strong">Agenzia delle Entrate - OMI</span>:
+            fonte dei valori di mercato inclusi nell'app (Osservatorio del Mercato Immobiliare).
           </li>
         </ul>
       </section>
 
       <section>
+        <h2>Contributo</h2>
+        <p>
+          Le prime tre analisi di annunci diversi sono gratuite. Per analizzarne altri l'app chiede un contributo di 0,99 €,
+          valido 12 mesi. Le analisi già fatte restano sempre consultabili. Il pagamento e il suo eventuale rimborso
+          sono gestiti da Google Play.
+        </p>
+      </section>
+
+      <section>
         <h2>Condivisione dei dati</h2>
         <p>
-          I dati non sono venduti. Possono essere trasmessi solo ai servizi strettamente necessari alle funzioni
-          richieste dall'utente, per esempio OpenAI per l'estrazione AI remota, il servizio vocale del dispositivo
-          per la trascrizione e i siti/fonti pubbliche consultate per i dati di mercato o per il link di annuncio.
+          I dati non sono venduti. Possono essere trasmessi solo ai servizi strettamente necessari alle funzioni richieste
+          dall'utente: il sito dell'annuncio che apri e Google Play per il contributo.
         </p>
       </section>
 
       <section>
         <h2>Conservazione e cancellazione</h2>
         <p>
-          I dati locali restano sul dispositivo finche l'utente non li modifica, li rimuove dall'app oppure
-          cancella i dati dell'app/disinstalla l'applicazione. I dati eventualmente inviati a servizi terzi
-          sono soggetti alle rispettive policy dei fornitori.
+          I dati locali restano sul dispositivo finché l'utente non elimina le analisi dall'archivio oppure cancella i dati
+          dell'app o la disinstalla. I dati trattati da servizi terzi sono soggetti alle rispettive informative.
         </p>
       </section>
 
       <section>
         <h2>Diritti dell'utente</h2>
         <ul>
-          <li>Puoi negare o revocare i permessi di microfono e accesso alle immagini dalle impostazioni del dispositivo.</li>
-          <li>Puoi evitare l'uso di OpenAI non inserendo alcuna API key o non usando la funzione AI remota.</li>
-          <li>Puoi cancellare i dati locali rimuovendo le bozze dall'app o cancellando i dati dell'app dal sistema.</li>
+          <li>Puoi eliminare ogni analisi dall'archivio dell'app.</li>
+          <li>Puoi cancellare tutti i dati locali, compresi i cookie dei siti di annunci, dalle impostazioni del dispositivo (Dati dell'app).</li>
+          <li>Puoi gestire i pagamenti e i rimborsi dal tuo account Google Play.</li>
         </ul>
+      </section>
+
+      <section>
+        <h2>Natura delle stime</h2>
+        <p>
+          I risultati dell'app sono stime basate su valori di mercato di zona e su ipotesi che puoi modificare. Non
+          costituiscono consulenza finanziaria, fiscale o legale: prima di acquistare o investire rivolgiti a un professionista.
+        </p>
       </section>
 
       <section>
         <h2>Minori</h2>
         <p>
-          L'app non e progettata specificamente per minori e non raccoglie intenzionalmente dati personali di minori.
+          L'app non è progettata specificamente per minori e non raccoglie intenzionalmente dati personali di minori.
         </p>
       </section>
 
       <section>
         <h2>Aggiornamenti della policy</h2>
         <p>
-          Questa informativa puo essere aggiornata se cambiano le funzioni dell'app, i servizi terzi usati o le
-          modalita di trattamento dei dati. La versione pubblicata su questa pagina fa fede dalla data indicata sopra.
+          Questa informativa può essere aggiornata se cambiano le funzioni dell'app, i servizi terzi usati o le
+          modalità di trattamento dei dati. La versione pubblicata su questa pagina fa fede dalla data indicata sopra.
         </p>
       </section>
     </main>

@@ -63,7 +63,46 @@ test("nomi dei comuni in maiuscolo diventano leggibili, con le preposizioni minu
   expect(names).toEqual(["San Lazzaro di Savena", "Sant'Omobono Terme", "Reggio nell'Emilia", "Di Castello"]);
 });
 
+test("l'apice inverso dell'OMI: accento in fondo alla parola, apostrofo davanti a una lettera", () => {
+  const rename = (csv: string, to: string) => csv.split("CASAGIOVE").join(to);
+  const names = ["FORLI`", "CAPRIATA D`ORBA", "SANT`AGATA FOSSILI", "ALA` DEI SARDI"].map((raw) => {
+    const omi = buildOmi(rename(valori, raw), rename(zone, raw), "2018-S2");
+    return omi.comuni[`${raw}|CE`].name;
+  });
+  expect(names).toEqual(["Forlì", "Capriata d'Orba", "Sant'Agata Fossili", "Alà dei Sardi"]);
+});
+
 test("BOM iniziale e righe vuote finali non rompono la lettura", () => {
   const omi = buildOmi("﻿" + valori + "\n\n", zone, "2018-S2");
   expect(casagiove(omi).zones).toHaveLength(4);
+});
+
+// I file scaricati dall'Agenzia: riga di intestazione col semestre, separatore ";" e un ";" in fondo a ogni riga.
+const officialValori = fixture("valori-official-sample.csv");
+const officialZone = fixture("zone-official-sample.csv");
+
+test("file ufficiali: stessi valori, letti col separatore punto e virgola", () => {
+  const omi = buildOmi(officialValori, officialZone);
+  expect(casagiove(omi).zones.map((z: any) => z.code).sort()).toEqual(["B5", "B6", "C3", "D5"]);
+  const c3 = zoneByCode(omi, "C3");
+  expect(c3.description).toBe("ESPANSIONE SUD-EST");
+  expect(c3.sale.normale).toEqual({ min: 900, max: 1250 });
+  expect(c3.rent.ottimo).toEqual({ min: 3.3, max: 4.8 });
+});
+
+test("file ufficiali: il semestre si legge dall'intestazione", () => {
+  expect(buildOmi(officialValori, officialZone).semester).toBe("2024-S2");
+});
+
+test("un semestre indicato a mano vince su quello del file", () => {
+  expect(buildOmi(officialValori, officialZone, "2025-S1").semester).toBe("2025-S1");
+});
+
+test("VALORI e ZONE di semestri diversi: errore, non un file mescolato", () => {
+  const otherZone = officialZone.replace("Semestre 2024/2", "Semestre 2025/1");
+  expect(() => buildOmi(officialValori, otherZone)).toThrow(/semestr/i);
+});
+
+test("senza semestre né nel file né a mano: errore", () => {
+  expect(() => buildOmi(valori, zone)).toThrow(/semestr/i);
 });

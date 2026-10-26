@@ -42,6 +42,16 @@ export function buildExtractionScript(): string {
 true;`;
 }
 
+/** La pagina chiede un controllo anti-robot: l'utente deve avere il tempo di completarlo. */
+export function isBlockedMessage(raw: string): boolean {
+  try {
+    const message = JSON.parse(raw);
+    return !!message && typeof message === "object" && message.blocked === true;
+  } catch {
+    return false;
+  }
+}
+
 /** Il messaggio della pagina come fonte da leggere; `null` se la pagina è bloccata o non ha nulla di utile. */
 export function parseWebViewMessage(raw: string): ListingSource | null {
   let message: any;

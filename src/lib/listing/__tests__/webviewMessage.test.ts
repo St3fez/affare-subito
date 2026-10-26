@@ -1,4 +1,4 @@
-import { buildExtractionScript, listingFromWebViewMessage, parseWebViewMessage } from "../webviewMessage";
+import { buildExtractionScript, isBlockedMessage, listingFromWebViewMessage, parseWebViewMessage } from "../webviewMessage";
 
 const fixture = require("../__fixtures__/immobiliare-next-data.json");
 const nextData = JSON.stringify(fixture);
@@ -79,5 +79,18 @@ describe("buildExtractionScript", () => {
 
   test("termina con true, come richiede la WebView", () => {
     expect(script.trim().endsWith("true;")).toBe(true);
+  });
+});
+
+describe("isBlockedMessage", () => {
+  test("la pagina chiede un controllo anti-robot", () => {
+    expect(isBlockedMessage(message({ blocked: true, bodyText: "Verifica che sei una persona" }))).toBe(true);
+  });
+
+  test("una pagina normale, vuota o illeggibile non è bloccata", () => {
+    expect(isBlockedMessage(message({ blocked: false, bodyText: longText }))).toBe(false);
+    expect(isBlockedMessage(message({}))).toBe(false);
+    expect(isBlockedMessage("non è json")).toBe(false);
+    expect(isBlockedMessage("null")).toBe(false);
   });
 });

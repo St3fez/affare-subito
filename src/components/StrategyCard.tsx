@@ -20,6 +20,7 @@ export function StrategyCard({
   totalToEnter,
   expanded,
   best,
+  secondHomeTax,
   onToggle,
   children,
 }: {
@@ -27,6 +28,8 @@ export function StrategyCard({
   totalToEnter: number;
   expanded: boolean;
   best: boolean;
+  /** Il costo per entrare include il registro da seconda casa (la prima casa vale solo se ci si vive). */
+  secondHomeTax?: boolean;
   onToggle: () => void;
   children?: React.ReactNode;
 }) {
@@ -61,7 +64,7 @@ export function StrategyCard({
           {live ? null : <Row label="Tasse all'anno" value={formatCurrency(result.annualTax)} note="Cedolare secca" />}
           <Row label="Guadagno netto all'anno" value={formatCurrency(result.annualNet)} tone={result.annualNet < 0 ? "bad" : undefined} />
           <Divider />
-          <Row label="Costo totale per entrare" value={formatCurrency(totalToEnter)} note="Con lavori e arredo di questo uso" />
+          <Row label="Costo totale per entrare" value={formatCurrency(totalToEnter)} note={secondHomeTax ? "Con lavori, arredo e il registro da seconda casa: la prima casa vale solo se ci vivi" : "Con lavori e arredo di questo uso"} />
           <Row
             label="Dopo la rata del mutuo, al mese"
             value={formatCurrency(result.monthlyCashflow)}

@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { BackHandler, Linking } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -8,7 +8,7 @@ import { DEFAULT_SETTINGS, type AnalysisSettings } from "../lib/analysis";
 import { resetFakeBilling } from "../billing/fakeBilling";
 import { clearAllData, deleteAnalysis, loadArchive, loadUsage, saveAnalysis, saveUsage, type SavedAnalysis } from "../lib/archive";
 import { listingUrlFromDeepLink } from "../lib/deepLink";
-import { applyPurchase, emptyUsage, isActive, registerAnalysis, type UsageState } from "../lib/entitlement";
+import { applyPurchase, emptyUsage, isActive, mergeActiveUntil, registerAnalysis, type UsageState } from "../lib/entitlement";
 import { syncEntitlement } from "../lib/entitlementSync";
 import { emptyManualListing } from "../lib/listing";
 import type { ListingData } from "../lib/types";
@@ -32,12 +32,21 @@ type Route =
 export default function AppRoot() {
   const [stack, setStack] = useState<Route[]>([{ name: "input" }]);
   const [autoStart, setAutoStart] = useState<{ url: string; token: number } | undefined>();
-  const [usage, setUsage] = useState<UsageState>(emptyUsage);
+  // Lo stato d'uso sta in un riferimento: chi lo legge dopo un'attesa (sincronizzazione con Google Play, pagamento) vede sempre
+  // l'ultimo valore, e le scritture su disco si accodano per non sorpassarsi.
+  const usageRef = useRef<UsageState>(emptyUsage);
+  const writeQueue = useRef<Promise<void>>(Promise.resolve());
   const [archive, setArchive] = useState<SavedAnalysis[]>([]);
   const [busy, setBusy] = useState(false);
   const [price, setPrice] = useState<string | null>(null);
   const [paywallError, setPaywallError] = useState<string | null>(null);
   const route = stack[stack.length - 1];
+
+  const commitUsage = useCallback((next: UsageState) => {
+    usageRef.current = next;
+    writeQueue.current = writeQueue.current.then(() => saveUsage(next)).catch(() => undefined);
+    return writeQueue.current;
+  }, []);
 
   const push = useCallback((next: Route) => setStack((s) => [...s, next]), []);
   const pop = useCallback(() => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s)), []);
@@ -60,8 +69,8 @@ export default function AppRoot() {
     const open = (link: string | null) => {
       // Solo nelle build di prova (stessa variabile del billing finto): `affaresubito://reset` azzera archivio e contributo.
       if (process.env.EXPO_PUBLIC_FAKE_BILLING === "1" && link?.startsWith("affaresubito://reset")) {
-        Promise.all([clearAllData(), resetFakeBilling()]).then(() => {
-          setUsage(emptyUsage);
+        writeQueue.current.then(() => Promise.all([clearAllData(), resetFakeBilling()])).then(() => {
+          usageRef.current = emptyUsage;
           setArchive([]);
           setStack([{ name: "input" }]);
         });
@@ -83,18 +92,17 @@ export default function AppRoot() {
     (async () => {
       const [savedUsage, savedArchive] = await Promise.all([loadUsage(), loadArchive()]);
       setArchive(savedArchive);
-      setUsage(savedUsage);
+      usageRef.current = savedUsage;
       try {
         const synced = await syncEntitlement(getBilling(), savedUsage);
-        if (synced.activeUntil !== savedUsage.activeUntil) {
-          setUsage(synced);
-          await saveUsage(synced);
-        }
+        // Solo la scadenza, sul valore di adesso: nel frattempo l'utente può aver fatto un'analisi.
+        const merged = mergeActiveUntil(usageRef.current, synced);
+        if (merged.activeUntil !== usageRef.current.activeUntil) commitUsage(merged);
       } catch {
         // Play non risponde: vale l'ultima scadenza nota.
       }
     })();
-  }, []);
+  }, [commitUsage]);
 
   // Il prezzo del contributo come lo scrive Google Play, quando si apre la schermata del contributo.
   const onPaywall = route.name === "paywall";
@@ -113,30 +121,28 @@ export default function AppRoot() {
       const now = new Date();
       const gate = registerAnalysis(current, pending.listing.listingKey, now);
       if (!gate.allowed) {
-        setUsage(current);
-        await saveUsage(current);
+        commitUsage(current);
         if (replaceCount === 1) push({ name: "paywall", pending });
         return false;
       }
       const item: SavedAnalysis = { id: String(now.getTime()), savedAt: now.toISOString(), listing: pending.listing, settings: pending.settings };
-      await saveUsage(gate.state);
+      commitUsage(gate.state);
       await saveAnalysis(item);
-      setUsage(gate.state);
       setArchive(await loadArchive());
       const consumedLastFree = !current.analyzedKeys.includes(pending.listing.listingKey) && gate.freeLeft === 0 && !isActive(gate.state, now);
       replaceTop(replaceCount, { name: "result", item, lastFree: consumedLastFree });
       return true;
     },
-    [push, replaceTop]
+    [commitUsage, push, replaceTop]
   );
 
   const calculate = useCallback(
     async (listing: ListingData, settings: AnalysisSettings) => {
       setBusy(true);
       try {
-        let current = usage;
+        let current = usageRef.current;
         try {
-          current = await syncEntitlement(getBilling(), usage);
+          current = mergeActiveUntil(usageRef.current, await syncEntitlement(getBilling(), current));
         } catch {
           // Play non risponde: si usa lo stato che c'è.
         }
@@ -145,17 +151,16 @@ export default function AppRoot() {
         setBusy(false);
       }
     },
-    [usage, runAnalysis]
+    [runAnalysis]
   );
 
   const finishPurchase = useCallback(
     async (until: Date, pending: Pending) => {
-      const next = applyPurchase(usage, until);
-      await saveUsage(next);
-      setUsage(next);
+      const next = applyPurchase(usageRef.current, until);
+      commitUsage(next);
       await runAnalysis(next, pending, 2); // via il contributo e la revisione, dentro il risultato
     },
-    [usage, runAnalysis]
+    [commitUsage, runAnalysis]
   );
 
   const purchase = useCallback(

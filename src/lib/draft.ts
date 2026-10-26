@@ -71,6 +71,7 @@ export function describeListing(listing: ListingData): string {
 
 const ISSUE_MESSAGES: Record<Issue, string> = {
   not_a_sale: "Questo annuncio non è una vendita (sembra un affitto): qui si analizzano solo case in vendita.",
+  not_residential: "Questo annuncio non è una casa (sembra un negozio, un ufficio, un box o un terreno): qui si analizzano solo abitazioni.",
   price_missing: "Manca il prezzo.",
   sqm_missing: "Mancano i metri quadri.",
   city_missing: "Manca il comune.",

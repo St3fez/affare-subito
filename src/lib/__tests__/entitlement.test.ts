@@ -4,6 +4,7 @@ import {
   ENTITLEMENT_DAYS,
   FREE_ANALYSES,
   isActive,
+  mergeActiveUntil,
   registerAnalysis,
   type UsageState,
 } from "../entitlement";
@@ -90,4 +91,11 @@ test("applyPurchase conserva gli annunci già analizzati", () => {
   const state = applyPurchase(registerAll(["a", "b"]), new Date("2027-01-01T00:00:00Z"));
   expect(state.analyzedKeys).toEqual(["a", "b"]);
   expect(state.activeUntil).toBe("2027-01-01T00:00:00.000Z");
+});
+
+test("mergeActiveUntil prende solo la scadenza e conserva gli annunci più recenti", () => {
+  // La sincronizzazione parte da uno stato vecchio: non deve restituire gratis un'analisi fatta nel frattempo.
+  const latest: UsageState = { analyzedKeys: ["a", "b"], activeUntil: null };
+  const staleSynced: UsageState = { analyzedKeys: ["a"], activeUntil: "2027-01-01T00:00:00.000Z" };
+  expect(mergeActiveUntil(latest, staleSynced)).toEqual({ analyzedKeys: ["a", "b"], activeUntil: "2027-01-01T00:00:00.000Z" });
 });

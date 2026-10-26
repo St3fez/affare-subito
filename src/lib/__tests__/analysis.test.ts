@@ -84,12 +84,28 @@ test("analisi completa", () => {
   expect(a.mortgageMonthly).toBeCloseTo(801, 1); // 160.000 € al 3,5% per 25 anni
 });
 
-test("costo per entrare per uso", () => {
-  const a = ok(listing);
+test("costo per entrare per uso: la prima casa vale solo se ci vivi", () => {
+  const a = ok(listing); // prima casa: registro al 2% solo per "viverci", 9% per gli affitti
+  const secondHomeExtra = 14000; // 200.000 € × (9% − 2%)
   expect(a.totalToEnter.live).toBe(a.acquisition.outlay + a.renovation);
-  expect(a.totalToEnter.longTerm).toBe(a.acquisition.outlay + a.renovation);
-  expect(a.totalToEnter.students).toBe(a.acquisition.outlay + a.renovation + 3600);
-  expect(a.totalToEnter.airbnb).toBe(a.acquisition.outlay + a.renovation + 30000);
+  expect(a.totalToEnter.longTerm).toBe(a.acquisition.outlay + a.renovation + secondHomeExtra);
+  expect(a.totalToEnter.students).toBe(a.acquisition.outlay + a.renovation + secondHomeExtra + 3600);
+  expect(a.totalToEnter.airbnb).toBe(a.acquisition.outlay + a.renovation + secondHomeExtra + 30000);
+});
+
+test("già seconda casa: nessuna differenza tra gli usi", () => {
+  const a = ok(listing, { ...DEFAULT_SETTINGS, firstHome: false });
+  expect(a.totalToEnter.longTerm).toBe(a.totalToEnter.live);
+});
+
+test("la resa degli affitti tiene conto del registro da seconda casa", () => {
+  const first = ok(listing).strategies.find((s) => s.usage === "longTerm")!;
+  const second = ok(listing, { ...DEFAULT_SETTINGS, firstHome: false }).strategies.find((s) => s.usage === "longTerm")!;
+  expect(first.netYieldPct).toBeCloseTo(second.netYieldPct, 6);
+});
+
+test("negozio o box → non supportato", () => {
+  expect(analyzeListing({ ...listing, propertyType: "negozio" }, DEFAULT_SETTINGS, deps)).toEqual({ kind: "unsupported", reason: "not_residential" });
 });
 
 test("l'affitto di zona è il punto medio della forchetta OMI", () => {

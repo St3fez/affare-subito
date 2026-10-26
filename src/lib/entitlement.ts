@@ -35,6 +35,14 @@ export function registerAnalysis(state: UsageState, listingKey: string, now: Dat
   return { allowed: false, state, reason: "paywall" };
 }
 
+/**
+ * Prende da `synced` solo la scadenza e tiene gli annunci di `current`: una sincronizzazione lenta con Google Play
+ * non deve cancellare un'analisi fatta mentre aspettava.
+ */
+export function mergeActiveUntil(current: UsageState, synced: UsageState): UsageState {
+  return { ...current, activeUntil: synced.activeUntil };
+}
+
 export function applyPurchase(state: UsageState, activeUntil: Date): UsageState {
   return { ...state, activeUntil: activeUntil.toISOString() };
 }

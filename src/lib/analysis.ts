@@ -38,6 +38,7 @@ export type Analysis =
       listing: ListingData;
       market: MarketReference | null;
       verdict: Verdict | null;
+      /** Costi di acquisto per chi ci vive; per gli affitti il registro è quello da seconda casa (vedi `totalToEnter`). */
       acquisition: Acquisition;
       renovation: number;
       mortgageMonthly: number;
@@ -74,7 +75,11 @@ export function analyzeListing(
 
   const market = lookupMarket(deps.omi, { city: listing.city, province: listing.province, zone: listing.zone });
   const verdict = buildVerdict({ price, sqm, condition: listing.condition }, market);
-  const acquisition = acquisitionCosts({ price, firstHome: settings.firstHome }, deps.fiscal);
+  // La prima casa (registro al 2%) vale solo se ci si vive: per gli affitti l'imposta è quella da seconda casa.
+  const acquisitions = Object.fromEntries(
+    USAGES.map((usage) => [usage, acquisitionCosts({ price, firstHome: settings.firstHome && usage === "live" }, deps.fiscal)])
+  ) as Record<Usage, Acquisition>;
+  const acquisition = acquisitions.live;
   const renovation = settings.renovationOverride ?? renovationCost(sqm, renovationLevelFor(listing.condition), deps.costs);
 
   const principal = price * (1 - settings.downPaymentPct / 100);
@@ -94,7 +99,7 @@ export function analyzeListing(
         sqm,
         bedrooms,
         firstHome: settings.firstHome,
-        outlay: acquisition.outlay,
+        outlay: acquisitions[usage].outlay,
         renovation,
         furnishing: furnishing[usage],
         condoMonthly: listing.condoMonthly ?? 0,
@@ -107,7 +112,7 @@ export function analyzeListing(
   );
 
   const totalToEnter = Object.fromEntries(
-    USAGES.map((usage) => [usage, roundCents(acquisition.outlay + renovation + furnishing[usage])])
+    USAGES.map((usage) => [usage, roundCents(acquisitions[usage].outlay + renovation + furnishing[usage])])
   ) as Record<Usage, number>;
 
   return { kind: "ok", listing, market, verdict, acquisition, renovation, mortgageMonthly, rentSqm, strategies, totalToEnter, warnings };

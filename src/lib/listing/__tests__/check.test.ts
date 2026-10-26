@@ -19,3 +19,17 @@ test("metri quadri assurdi → avviso, non blocco", () => {
   }
   expect(checkListing({ ...base, sqm: 80 }).warnings).toEqual([]);
 });
+
+test.each(["negozio", "ufficio", "box", "garage", "autorimessa", "posto auto", "capannone", "magazzino", "terreno", "locale commerciale", "laboratorio"])(
+  "%s non è una casa",
+  (propertyType) => {
+    expect(checkListing({ ...base, propertyType }).blocking).toContain("not_residential");
+  }
+);
+
+test.each(["appartamento", "trilocale", "quadrilocale", "villa", "attico", "bilocale", "loft", "casale", ""])(
+  "'%s' è residenziale o sconosciuto: nessun blocco",
+  (propertyType) => {
+    expect(checkListing({ ...base, propertyType }).blocking).toEqual([]);
+  }
+);

@@ -15,12 +15,22 @@ test("Play riporta una scadenza → stato aggiornato, annunci conservati", async
   expect(state).toEqual({ analyzedKeys: ["a"], activeUntil: "2027-11-01T00:00:00.000Z" });
 });
 
-test("nessun acquisto attivo → scadenza azzerata (scaduto o rimborsato)", async () => {
-  const state = await syncEntitlement(stub({ getActiveUntil: async () => null }), {
-    analyzedKeys: ["a", "b"],
-    activeUntil: "2027-11-01T00:00:00.000Z",
-  });
-  expect(state).toEqual({ analyzedKeys: ["a", "b"], activeUntil: null });
+const now = new Date("2026-11-01T00:00:00Z");
+
+test("Play non vede acquisti ma la scadenza salvata è ancora futura → si conserva", async () => {
+  // Capita davvero: Play si sta ancora avviando, o è attivo un altro account Google. Chi ha pagato non va bloccato.
+  const state = await syncEntitlement(stub({ getActiveUntil: async () => null }), { analyzedKeys: ["a", "b"], activeUntil: "2027-11-01T00:00:00.000Z" }, now);
+  expect(state).toEqual({ analyzedKeys: ["a", "b"], activeUntil: "2027-11-01T00:00:00.000Z" });
+});
+
+test("Play non vede acquisti e la scadenza salvata è passata → si azzera", async () => {
+  const state = await syncEntitlement(stub({ getActiveUntil: async () => null }), { analyzedKeys: ["a"], activeUntil: "2026-10-01T00:00:00.000Z" }, now);
+  expect(state).toEqual({ analyzedKeys: ["a"], activeUntil: null });
+});
+
+test("Play non vede acquisti e non c'è nessuna scadenza → resta senza", async () => {
+  const state = await syncEntitlement(stub({ getActiveUntil: async () => null }), { analyzedKeys: [], activeUntil: null }, now);
+  expect(state.activeUntil).toBeNull();
 });
 
 test("Play non risponde → vale l'ultima scadenza nota", async () => {

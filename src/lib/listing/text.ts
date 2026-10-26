@@ -744,6 +744,18 @@ function extractTitle(text: string): string {
   return lines[0] ? stripTrailingPunctuation(lines[0]) : "";
 }
 
+/**
+ * Vendita o affitto. L'indirizzo della pagina è l'indizio più sicuro; poi i primi caratteri del testo (il titolo),
+ * dove "in vendita" prevale: una vendita può citare un affitto in corso ("attualmente locato a 500 €/mese").
+ */
+export function inferContract(text: string, url?: string): ListingData["contract"] {
+  if (url && /(^|[/-])(affitto|affitti|locazione)([/-]|$)/i.test(url.replace(/^https?:\/\/[^/]*/i, ""))) return "rent";
+  const head = text.slice(0, 400);
+  if (/\b(in vendita|vendesi|vendita)\b/i.test(head)) return "sale";
+  if (/\b(in affitto|affittasi)\b/i.test(head)) return "rent";
+  return "unknown";
+}
+
 export function parseListingText(text: string, url?: string): ListingData {
   const candidates = extractMoneyCandidates(text);
   const price =
@@ -776,7 +788,7 @@ export function parseListingText(text: string, url?: string): ListingData {
     source: "text",
     url,
     listingKey: `text:${stableHash(normalized)}`,
-    contract: "unknown",
+    contract: inferContract(text, url),
     title: extractTitle(text),
     propertyType: extractType(text).toLowerCase(),
     price: price || null,

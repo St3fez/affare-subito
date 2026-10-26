@@ -98,7 +98,7 @@ test("riassunto dell'annuncio", () => {
 });
 
 test("ogni problema ha una spiegazione in italiano", () => {
-  const issues: Issue[] = ["not_a_sale", "price_missing", "sqm_missing", "city_missing", "sqm_implausible"];
+  const issues: Issue[] = ["not_a_sale", "not_residential", "price_missing", "sqm_missing", "city_missing", "sqm_implausible"];
   for (const issue of issues) expect(describeIssue(issue).length).toBeGreaterThan(10);
 });
 

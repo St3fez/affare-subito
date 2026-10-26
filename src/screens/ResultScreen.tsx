@@ -10,13 +10,13 @@ import type { SavedAnalysis } from "../lib/archive";
 import { describeIssue, describeListing } from "../lib/draft";
 import { formatCurrency } from "../lib/format";
 import { staleDataWarning } from "../lib/staleness";
+import { presentVerdict } from "../lib/verdictView";
 import type { Assumptions } from "../lib/strategies";
 import type { Usage } from "../lib/types";
 import { Button, Card, Divider, Notice, Row, Screen } from "../ui/components";
 import { colors, space } from "../ui/theme";
 
-const HEADLINE = { sotto: "Sotto il mercato", in_linea: "In linea con il mercato", sopra: "Sopra il mercato" } as const;
-const TONE = { sotto: colors.good, in_linea: colors.ink, sopra: colors.bad } as const;
+const TONE_COLOR = { good: colors.good, neutral: colors.ink, bad: colors.bad } as const;
 const CONDITION_NOTE = {
   pronto: "nuovo o ristrutturato",
   abitabile: "abitabile",
@@ -132,18 +132,16 @@ export function ResultScreen({
   };
 
   const staleWarning = market ? staleDataWarning(market.semester, new Date()) : null;
+  const view = verdict ? presentVerdict(verdict, staleWarning, market?.semester) : null;
 
   return (
     <Screen title={listing.title || "Risultato"} subtitle={describeListing(listing)} onBack={onBack}>
       {staleWarning ? <Notice tone="warn">{staleWarning}</Notice> : null}
-      {verdict ? (
+      {verdict && view ? (
         <Card>
-          <Text style={[styles.verdict, { color: TONE[verdict.level] }]}>{HEADLINE[verdict.level]}</Text>
-          <Text style={styles.muted}>
-            {verdict.gapPct >= 0 ? "+" : "−"}
-            {Math.abs(Math.round(verdict.gapPct))}% rispetto al valore medio della fascia di zona
-          </Text>
-          <VerdictGauge verdict={verdict} />
+          <Text style={[styles.verdict, { color: TONE_COLOR[view.tone] }]}>{view.headline}</Text>
+          <Text style={styles.muted}>{view.detail}</Text>
+          <VerdictGauge verdict={verdict} neutral={!!staleWarning} />
           <Text style={styles.small}>
             {market?.label} · valori OMI {market?.semester} per immobili {CONDITION_NOTE[listing.condition ?? "abitabile"]}
           </Text>
@@ -186,6 +184,7 @@ export function ResultScreen({
               totalToEnter={totalToEnter[strategy.usage]}
               expanded={open === strategy.usage}
               best={strategy.usage === bestUsage}
+              secondHomeTax={settings.firstHome && strategy.usage !== "live"}
               onToggle={() => setOpen(open === strategy.usage ? null : strategy.usage)}
             >
               {sliders[strategy.usage]}

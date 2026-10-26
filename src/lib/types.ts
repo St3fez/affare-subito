@@ -1,6 +1,6 @@
 export type Condition = "pronto" | "abitabile" | "da_rinfrescare" | "da_ristrutturare";
 
-export type Issue = "not_a_sale" | "price_missing" | "sqm_missing" | "city_missing" | "sqm_implausible";
+export type Issue = "not_a_sale" | "not_residential" | "price_missing" | "sqm_missing" | "city_missing" | "sqm_implausible";
 
 export type ListingData = {
   source: "nextData" | "text" | "manual";

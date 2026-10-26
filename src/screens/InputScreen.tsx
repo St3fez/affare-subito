@@ -4,13 +4,14 @@ import { StyleSheet, Text, TextInput, View } from "react-native";
 import { ListingWebView } from "../components/ListingWebView";
 import { readListing } from "../lib/listing";
 import { normalizeListingUrl } from "../lib/listing/url";
-import { listingFromWebViewMessage } from "../lib/listing/webviewMessage";
+import { isBlockedMessage, listingFromWebViewMessage } from "../lib/listing/webviewMessage";
 import type { ListingData } from "../lib/types";
 import { Button, Card, LabeledInput, Notice, Screen } from "../ui/components";
 import { colors, radius, space } from "../ui/theme";
 
 const LOAD_TIMEOUT_MS = 20000;
 const JUNK_TIMEOUT_MS = 6000;
+const BLOCKED_TIMEOUT_MS = 90000; // il tempo di completare un controllo anti-robot
 
 type Phase = "idle" | "loading" | "failed" | "paste";
 
@@ -40,6 +41,7 @@ export function InputScreen({
   const [message, setMessage] = useState<string | null>(null);
   const [pasted, setPasted] = useState("");
   const [attempt, setAttempt] = useState(0);
+  const [challenge, setChallenge] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const junkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -69,6 +71,7 @@ export function InputScreen({
       }
       clearTimers();
       setMessage(null);
+      setChallenge(false);
       setUrl(normalized);
       setActiveUrl(normalized);
       setAttempt((n) => n + 1);
@@ -94,6 +97,13 @@ export function InputScreen({
       if (listing) {
         clearTimers();
         onListing(listing);
+        return;
+      }
+      // La pagina chiede un controllo anti-robot: l'utente lo completa nella WebView, senza fretta.
+      if (isBlockedMessage(raw)) {
+        clearTimers();
+        setChallenge(true);
+        timers.current.push(setTimeout(() => fail("Non sono riuscito a superare il controllo della pagina."), BLOCKED_TIMEOUT_MS));
         return;
       }
       // Una pagina senza annuncio (per esempio un passaggio intermedio): si aspetta ancora un po', poi si ripiega.
@@ -164,6 +174,7 @@ export function InputScreen({
         <Card>
           <Text style={styles.cardTitle}>Sto aprendo l'annuncio…</Text>
           <Text style={styles.muted}>Se la pagina chiede qualcosa (cookie o un controllo anti-robot), rispondi come faresti nel browser.</Text>
+          {challenge ? <Notice tone="warn">La pagina chiede un controllo: completalo qui sotto. L'analisi riparte da sola.</Notice> : null}
           <View style={styles.web}>
             <ListingWebView
               key={attempt}
@@ -172,6 +183,7 @@ export function InputScreen({
               onProblem={(reason) => fail(reason)}
             />
           </View>
+          <Button label="Incolla il testo invece" variant="secondary" onPress={() => { clearTimers(); setMessage(null); setPhase("paste"); }} />
           <Button label="Annulla" variant="ghost" onPress={() => { clearTimers(); setPhase("idle"); }} />
         </Card>
       ) : null}

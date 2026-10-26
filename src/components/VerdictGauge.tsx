@@ -17,9 +17,9 @@ const MARKER_WIDTH = 6;
  * La posizione del prezzo al metro quadro dentro la forchetta di mercato della zona:
  * la fascia colorata è la forchetta OMI, il segno è l'annuncio.
  */
-export function VerdictGauge({ verdict }: { verdict: Verdict }) {
+export function VerdictGauge({ verdict, neutral = false }: { verdict: Verdict; neutral?: boolean }) {
   const { reference, pricePerSqm, level } = verdict;
-  const color = TONES[level];
+  const color = neutral ? colors.ink : TONES[level];
   const [trackWidth, setTrackWidth] = useState(0);
   const [labelWidth, setLabelWidth] = useState(0);
 

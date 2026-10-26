@@ -46,3 +46,5 @@ export type OmiComune = { istat: string; name: string; province: string; zones: 
 
 /** Chiave: nome del comune come nel CSV + "|" + sigla della provincia, per esempio "MILANO|MI". */
 export type OmiData = { semester: string; comuni: Record<string, OmiComune> };
+
+export type Usage = "live" | "longTerm" | "students" | "airbnb";

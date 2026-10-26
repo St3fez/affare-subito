@@ -28,9 +28,22 @@ export function ListingEditor({
 }) {
   const set = <K extends keyof ListingDraft>(key: K, value: ListingDraft[K]) => onChange({ ...draft, [key]: value });
 
+  const rent = draft.contract === "rent";
+
   return (
     <View style={styles.root}>
-      <LabeledInput label="Prezzo richiesto" value={draft.price} onChangeText={(v) => set("price", v)} keyboardType="numeric" suffix="€" />
+      <Text style={styles.label}>È in vendita o in affitto?</Text>
+      <View style={styles.chips}>
+        <Chip label="Vendita" selected={!rent} onPress={() => set("contract", "sale")} />
+        <Chip label="Affitto" selected={rent} onPress={() => set("contract", "rent")} />
+      </View>
+      <LabeledInput
+        label={rent ? "Canone al mese" : "Prezzo richiesto"}
+        value={draft.price}
+        onChangeText={(v) => set("price", v)}
+        keyboardType="numeric"
+        suffix="€"
+      />
       <LabeledInput label="Metri quadri" value={draft.sqm} onChangeText={(v) => set("sqm", v)} keyboardType="numeric" suffix="m²" />
       <LabeledInput label="Comune" value={draft.city} onChangeText={(v) => set("city", v)} autoCapitalize="words" />
       <LabeledInput
@@ -63,18 +76,20 @@ export function ListingEditor({
         ))}
       </View>
 
-      <View style={styles.switchRow}>
-        <View style={styles.switchText}>
-          <Text style={styles.label}>È la tua prima casa?</Text>
-          <Text style={styles.hint}>Cambia le imposte di acquisto.</Text>
+      {rent ? null : (
+        <View style={styles.switchRow}>
+          <View style={styles.switchText}>
+            <Text style={styles.label}>È la tua prima casa?</Text>
+            <Text style={styles.hint}>Cambia le imposte di acquisto.</Text>
+          </View>
+          <Switch
+            value={firstHome}
+            onValueChange={onFirstHomeChange}
+            trackColor={{ true: colors.accent, false: colors.line }}
+            accessibilityLabel="È la tua prima casa?"
+          />
         </View>
-        <Switch
-          value={firstHome}
-          onValueChange={onFirstHomeChange}
-          trackColor={{ true: colors.accent, false: colors.line }}
-          accessibilityLabel="È la tua prima casa?"
-        />
-      </View>
+      )}
     </View>
   );
 }

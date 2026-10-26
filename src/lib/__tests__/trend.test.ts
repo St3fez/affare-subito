@@ -21,9 +21,18 @@ test("una zona: la sua serie, semestre per semestre", () => {
   expect(trend.rent[3]).toEqual({ semester: "2022-S2", value: 12 });
 });
 
-test("più zone: la mediana di quelle che hanno un valore in quel semestre", () => {
+test("più zone: la mediana delle zone con la serie completa, così una zona nuova non crea un salto finto", () => {
+  // D1 ha valori solo nell'ultimo semestre: entrando nella mediana porterebbe l'ultimo punto a 1200 invece di 1800.
   const trend = marketTrend(history, "100", ["B1", "C1", "D1"])!;
-  expect(trend.sale.map((p) => p.value)).toEqual([1500, 1600, null, 1200]);
+  expect(trend.sale.map((p) => p.value)).toEqual([1500, 1600, null, 1800]);
+});
+
+test("più zone, nessuna completa: la mediana di quelle che hanno un valore in quel semestre", () => {
+  const patchy: OmiHistory = {
+    semesters: ["2021-S1", "2021-S2", "2022-S1"],
+    zones: { "1|A": { sale: [1000, null, 1200], rent: [5, null, 6] }, "1|B": { sale: [null, 2000, 2400], rent: [null, 9, 10] } },
+  };
+  expect(marketTrend(patchy, "1", ["A", "B"])!.sale.map((p) => p.value)).toEqual([1000, 2000, 1800]);
 });
 
 test("senza zone note, o con un solo valore, non c'è andamento", () => {

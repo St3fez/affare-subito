@@ -18,6 +18,18 @@ va aggiunto `--semester 2018-S2`), che però si ferma al 2018 e **non va usata p
 
 Il primo semestre 2026 dà 7.887 comuni e 22.848 zone con valori residenziali, circa 4 MB.
 
+## Storico per i grafici
+
+I grafici "Come sono cambiati i valori della zona" leggono `src/data/omi-history.json` (anch'esso fuori dal repository).
+Si genera dai VALORI di più semestri, ognuno col proprio file ufficiale:
+
+`node scripts/build-omi-history.js --out src/data/omi-history.json <2021-1_VALORI.csv> <2021-2_VALORI.csv> … <2026-1_VALORI.csv>`
+
+Per ogni zona dell'ultimo semestre c'è il valore centrale della forchetta "normale" di vendita e di affitto, semestre per
+semestre; i semestri mancanti restano vuoti (nel grafico un buco nella linea). Le zone si seguono con il codice LinkZona: tra il
+2023 e il 2024 l'OMI ne ha ridisegnate circa l'8%, e per quelle la serie parte dal 2024. Dal 2021/1 al 2026/1 (senza il 2024/1)
+sono 22.503 zone, circa 2,7 MB. Senza il file l'app funziona e non mostra il grafico.
+
 ## Cose da sapere sui file
 
 - Le province sono quelle **catastali**, precedenti alle ultime riforme: Monza sta sotto MI, Fermo sotto AP, Barletta-Andria-Trani

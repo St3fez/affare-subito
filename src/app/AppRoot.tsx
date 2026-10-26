@@ -16,6 +16,7 @@ import { ArchiveScreen } from "../screens/ArchiveScreen";
 import { CompareScreen } from "../screens/CompareScreen";
 import { InputScreen } from "../screens/InputScreen";
 import { PaywallScreen } from "../screens/PaywallScreen";
+import { RentResultScreen } from "../screens/RentResultScreen";
 import { ResultScreen } from "../screens/ResultScreen";
 import { ReviewScreen } from "../screens/ReviewScreen";
 
@@ -233,15 +234,18 @@ export default function AppRoot() {
       );
       break;
     case "result":
-      screen = (
-        <ResultScreen
+      screen =
+        route.item.listing.contract === "rent" ? (
+          <RentResultScreen key={route.item.id} item={route.item} lastFree={route.lastFree} onBack={pop} />
+        ) : (
+          <ResultScreen
           key={route.item.id}
           item={route.item}
           lastFree={route.lastFree}
           onSettingsChange={(settings) => saveSettings(route.item, settings)}
           onBack={pop}
         />
-      );
+        );
       break;
     case "paywall":
       screen = (

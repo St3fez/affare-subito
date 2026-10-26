@@ -127,7 +127,7 @@ export function InputScreen({
   return (
     <Screen
       title="Affare Subito"
-      subtitle="Incolla il link di un annuncio e ti dico se è un affare."
+      subtitle="Incolla il link di un annuncio, in vendita o in affitto: ti dico se il prezzo è giusto."
       footer={
         <>
           <Button label="Inserisci i dati a mano" variant="secondary" onPress={onManual} />

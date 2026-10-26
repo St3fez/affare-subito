@@ -40,13 +40,19 @@ export function ReviewScreen({
   return (
     <Screen
       title={manual ? "Inserisci i dati" : "Rivedi i dati"}
-      subtitle={manual ? "Bastano pochi dati: prezzo, metri quadri e comune." : `Ho capito: ${describeListing(applied)}. Correggi quello che non torna.`}
+      subtitle={
+        manual ? "Bastano pochi dati: prezzo o canone, metri quadri e comune." : `Ho capito: ${describeListing(applied)}. Correggi quello che non torna.`
+      }
       onBack={onBack}
       footer={<Button label={busy ? "Calcolo…" : "Calcola"} onPress={() => onCalculate(applied, { ...settings, firstHome })} disabled={!canCalculate} />}
     >
-      {blocking.length > 0 ? (
-        <Notice tone={blocking.includes("not_a_sale") ? "bad" : manual ? "info" : "warn"}>{blocking.map(describeIssue).join(" ")}</Notice>
-      ) : null}
+      {blocking.length > 0 ? <Notice tone={manual ? "info" : "warn"}>{blocking.map(describeIssue).join(" ")}</Notice> : null}
+
+      {warnings.filter((issue) => issue === "looks_like_sale" || issue === "looks_like_rent").map((issue) => (
+        <Notice key={issue} tone="warn">
+          {describeIssue(issue)}
+        </Notice>
+      ))}
 
       {needsSqmConfirmation ? (
         <Card>

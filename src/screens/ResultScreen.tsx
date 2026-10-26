@@ -1,23 +1,26 @@
 import React, { useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import { analysisDeps } from "../app/deps";
+import { analysisDeps, getHistory } from "../app/deps";
+import { BarList, SplitBar } from "../components/charts";
 import { EstimateSlider } from "../components/EstimateSlider";
-import { StrategyCard } from "../components/StrategyCard";
+import { StrategyCard, USAGE_TITLES } from "../components/StrategyCard";
+import { TrendCard } from "../components/TrendCard";
 import { VerdictGauge } from "../components/VerdictGauge";
 import { analyzeListing, type AnalysisSettings } from "../lib/analysis";
 import type { SavedAnalysis } from "../lib/archive";
 import { describeIssue, describeListing } from "../lib/draft";
-import { formatCurrency } from "../lib/format";
+import { formatCurrency, formatPercent } from "../lib/format";
 import { staleDataWarning } from "../lib/staleness";
+import { marketTrend } from "../lib/trend";
 import { presentVerdict } from "../lib/verdictView";
 import type { Assumptions } from "../lib/strategies";
 import type { Usage } from "../lib/types";
 import { Button, Card, Divider, Notice, Row, Screen } from "../ui/components";
-import { colors, space } from "../ui/theme";
+import { chart, colors, space } from "../ui/theme";
 
-const TONE_COLOR = { good: colors.good, neutral: colors.ink, bad: colors.bad } as const;
-const CONDITION_NOTE = {
+export const TONE_COLOR = { good: colors.good, neutral: colors.ink, bad: colors.bad } as const;
+export const CONDITION_NOTE = {
   pronto: "nuovo o ristrutturato",
   abitabile: "abitabile",
   da_rinfrescare: "da rinfrescare",
@@ -132,7 +135,12 @@ export function ResultScreen({
   };
 
   const staleWarning = market ? staleDataWarning(market.semester, new Date()) : null;
-  const view = verdict ? presentVerdict(verdict, staleWarning, market?.semester) : null;
+  const scope = market ? { precision: market.precision, zoneCount: market.zoneCodes.length } : undefined;
+  const view = verdict ? presentVerdict(verdict, staleWarning, market?.semester, scope) : null;
+  const history = getHistory();
+  const trend = market && history ? marketTrend(history, market.istat, market.zoneCodes) : null;
+  const price = listing.price ?? 0;
+  const extras = Math.max(0, totalToEnter.live - price);
 
   return (
     <Screen title={listing.title || "Risultato"} subtitle={describeListing(listing)} onBack={onBack}>
@@ -141,7 +149,12 @@ export function ResultScreen({
         <Card>
           <Text style={[styles.verdict, { color: TONE_COLOR[view.tone] }]}>{view.headline}</Text>
           <Text style={styles.muted}>{view.detail}</Text>
-          <VerdictGauge verdict={verdict} neutral={!!staleWarning} />
+          <VerdictGauge
+            verdict={verdict}
+            neutral={view.tone === "neutral"}
+            place={market?.precision === "zona" ? "della zona" : "del comune"}
+            label={`${view.headline}. ${view.detail}`}
+          />
           <Text style={styles.small}>
             {market?.label} · valori OMI {market?.semester} per immobili {CONDITION_NOTE[listing.condition ?? "abitabile"]}
           </Text>
@@ -157,9 +170,18 @@ export function ResultScreen({
 
       {lastFree ? <Notice>Era la tua ultima analisi gratuita. Per analizzarne altre serve un contributo da 0,99 € che vale un anno.</Notice> : null}
 
+      {trend && market ? <TrendCard trend={trend} initial="sale" precision={market.precision} /> : null}
+
       <Card>
         <Text style={styles.section}>Quanto costa entrare</Text>
-        <Row label="Prezzo richiesto" value={formatCurrency(listing.price ?? 0)} />
+        <SplitBar
+          parts={[
+            { key: "price", label: "Prezzo", value: price, display: formatCurrency(price), color: chart.main },
+            { key: "extras", label: "Costi in più", value: extras, display: formatCurrency(extras), color: chart.second },
+          ]}
+        />
+        <Divider />
+        <Row label="Prezzo richiesto" value={formatCurrency(price)} />
         <Row label="Imposta di registro" value={formatCurrency(acquisition.registro)} note="Calcolata sul prezzo: è una stima per eccesso" />
         <Row label="Imposte ipotecaria e catastale" value={formatCurrency(acquisition.ipotecariaCatastale)} />
         <Row label="Notaio" value={formatCurrency(acquisition.notary)} note="Stima" />
@@ -176,6 +198,14 @@ export function ResultScreen({
 
       <Card>
         <Text style={styles.section}>Come potresti usarla</Text>
+        <BarList
+          rows={strategies.map((strategy) => {
+            const value = strategy.monthlyIncome > 0 ? strategy.netYieldPct : null;
+            return { key: strategy.usage, label: USAGE_TITLES[strategy.usage], value, display: value === null ? "—" : formatPercent(value) };
+          })}
+        />
+        <Text style={styles.small}>Resa netta all'anno. Tocca un uso qui sotto per vedere i conti.</Text>
+        <Divider />
         {strategies.map((strategy, index) => (
           <View key={strategy.usage} style={styles.strategy}>
             {index > 0 ? <Divider /> : null}

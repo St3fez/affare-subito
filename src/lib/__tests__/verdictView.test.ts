@@ -29,3 +29,16 @@ test("per un affitto il titolo parla di canone", () => {
   expect(presentVerdict(verdict("sotto", -20, "rent"), null)).toMatchObject({ headline: "Canone sotto il mercato", tone: "good" });
   expect(presentVerdict(verdict("sopra", 15, "rent"), null).detail).toBe("+15% rispetto al canone medio della fascia di zona");
 });
+
+test("zona non riconosciuta in un comune con più zone: confronto con la media del comune, senza rosso né verde", () => {
+  const view = presentVerdict(verdict("sopra", 119, "rent"), null, "2026-S1", { precision: "comune", zoneCount: 42 });
+  expect(view.tone).toBe("neutral");
+  expect(view.headline).toBe("Confronto con la media del comune");
+  expect(view.detail).toContain("+119%");
+  expect(view.detail).toMatch(/zona/);
+});
+
+test("comune con una sola zona, o zona riconosciuta: verdetto normale", () => {
+  expect(presentVerdict(verdict("sopra", 20), null, "2026-S1", { precision: "comune", zoneCount: 1 }).tone).toBe("bad");
+  expect(presentVerdict(verdict("sopra", 20), null, "2026-S1", { precision: "zona", zoneCount: 1 }).tone).toBe("bad");
+});

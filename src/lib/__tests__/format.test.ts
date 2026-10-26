@@ -1,4 +1,4 @@
-import { formatCurrency, parseFlexibleNumber, toNumber } from "../format";
+import { formatCurrency, formatPercent, parseFlexibleNumber, toNumber } from "../format";
 
 test("parseFlexibleNumber legge i formati italiani", () => {
   expect(parseFlexibleNumber("1.250.000")).toBe(1250000);
@@ -17,4 +17,10 @@ test("formatCurrency raggruppa le migliaia all'italiana", () => {
 
 test("formatCurrency non raggruppa i numeri a quattro cifre (regola italiana)", () => {
   expect(formatCurrency(1234)).toMatch(/^1234\s?€$/);
+});
+
+test("percentuali all'italiana: virgola decimale e segno meno vero", () => {
+  expect(formatPercent(3.64)).toBe("3,6%");
+  expect(formatPercent(-1.25)).toBe("−1,3%");
+  expect(formatPercent(0)).toBe("0,0%");
 });

@@ -6,11 +6,25 @@ import { analysisDeps } from "../app/deps";
 import { analyzeListing } from "../lib/analysis";
 import type { SavedAnalysis } from "../lib/archive";
 import { describeListing } from "../lib/draft";
+import { analyzeRental } from "../lib/rent";
+import { staleDataWarning } from "../lib/staleness";
+import { presentVerdict, type VerdictView } from "../lib/verdictView";
 import { Button, Card, Screen } from "../ui/components";
 import { colors, space } from "../ui/theme";
 
-const VERDICT_TEXT = { sotto: "Sotto il mercato", in_linea: "In linea con il mercato", sopra: "Sopra il mercato" } as const;
-const VERDICT_COLOR = { sotto: colors.good, in_linea: colors.ink, sopra: colors.bad } as const;
+const TONE_COLOR = { good: colors.good, neutral: colors.ink, bad: colors.bad } as const;
+
+const isRental = (item: SavedAnalysis) => item.listing.contract === "rent";
+
+/** Lo stesso titolo della schermata del risultato (neutro se i valori sono vecchi o la zona non è stata riconosciuta). */
+function summarize(item: SavedAnalysis): { supported: boolean; view: VerdictView | null } {
+  const analysis = isRental(item) ? analyzeRental(item.listing, item.settings, analysisDeps) : analyzeListing(item.listing, item.settings, analysisDeps);
+  if (analysis.kind !== "ok") return { supported: false, view: null };
+  const { verdict, market } = analysis;
+  if (!verdict || !market) return { supported: true, view: null };
+  const scope = { precision: market.precision, zoneCount: market.zoneCodes.length };
+  return { supported: true, view: presentVerdict(verdict, staleDataWarning(market.semester, new Date()), market.semester, scope) };
+}
 
 /** Le analisi già fatte, sempre consultabili (anche senza contributo); se ne possono confrontare due. */
 export function ArchiveScreen({
@@ -29,7 +43,9 @@ export function ArchiveScreen({
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
 
-  const analyses = useMemo(() => items.map((item) => analyzeListing(item.listing, item.settings, analysisDeps)), [items]);
+  const summaries = useMemo(() => items.map(summarize), [items]);
+  // Il confronto mette a fianco prezzi, costi e rese: vale solo tra case in vendita.
+  const forSale = items.filter((item) => !isRental(item)).length;
 
   const toggle = (id: string) =>
     setSelected((current) => (current.includes(id) ? current.filter((x) => x !== id) : current.length < 2 ? [...current, id] : current));
@@ -52,7 +68,7 @@ export function ArchiveScreen({
   return (
     <Screen
       title="Archivio"
-      subtitle={selecting ? "Scegli due case da confrontare." : "Le analisi che hai già fatto."}
+      subtitle={selecting ? "Scegli due case in vendita da confrontare." : "Le analisi che hai già fatto."}
       onBack={onBack}
       footer={
         items.length === 0 ? undefined : selecting ? (
@@ -61,7 +77,7 @@ export function ArchiveScreen({
             <Button label="Annulla" variant="ghost" onPress={() => { setSelecting(false); setSelected([]); }} />
           </>
         ) : (
-          <Button label="Confronta due case" variant="secondary" onPress={() => setSelecting(true)} disabled={items.length < 2} />
+          <Button label="Confronta due case" variant="secondary" onPress={() => setSelecting(true)} disabled={forSale < 2} />
         )
       }
     >
@@ -72,19 +88,20 @@ export function ArchiveScreen({
         </Card>
       ) : (
         items.map((item, index) => {
-          const analysis = analyses[index];
-          const verdict = analysis.kind === "ok" ? analysis.verdict : null;
+          const { supported, view } = summaries[index];
           const isSelected = selected.includes(item.id);
+          const selectable = !isRental(item);
           return (
             <Card key={item.id}>
               <TouchableOpacity
-                onPress={() => (selecting ? toggle(item.id) : onOpen(item))}
+                onPress={() => (selecting ? selectable && toggle(item.id) : onOpen(item))}
+                disabled={selecting && !selectable}
                 accessibilityRole="button"
                 accessibilityLabel={item.listing.title || describeListing(item.listing)}
-                accessibilityState={selecting ? { selected: isSelected } : undefined}
-                style={styles.row}
+                accessibilityState={selecting ? { selected: isSelected, disabled: !selectable } : undefined}
+                style={[styles.row, selecting && !selectable && styles.dimmed]}
               >
-                {selecting ? (
+                {selecting && selectable ? (
                   <MaterialIcons name={isSelected ? "check-circle" : "radio-button-unchecked"} size={26} color={isSelected ? colors.accent : colors.muted} />
                 ) : null}
                 <View style={styles.text}>
@@ -92,9 +109,10 @@ export function ArchiveScreen({
                     {item.listing.title || "Immobile"}
                   </Text>
                   <Text style={styles.muted}>{describeListing(item.listing)}</Text>
-                  <Text style={[styles.verdict, { color: verdict ? VERDICT_COLOR[verdict.level] : colors.muted }]}>
-                    {analysis.kind === "unsupported" ? "Non analizzabile" : verdict ? VERDICT_TEXT[verdict.level] : "Senza confronto di zona"}
+                  <Text style={[styles.verdict, { color: view ? TONE_COLOR[view.tone] : colors.muted }]}>
+                    {!supported ? "Non analizzabile" : view ? view.headline : "Senza confronto di zona"}
                   </Text>
+                  {selecting && !selectable ? <Text style={styles.date}>Gli affitti non si confrontano con le case in vendita</Text> : null}
                   <Text style={styles.date}>{new Date(item.savedAt).toLocaleDateString("it-IT")}</Text>
                 </View>
               </TouchableOpacity>
@@ -109,6 +127,7 @@ export function ArchiveScreen({
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: space.md },
+  dimmed: { opacity: 0.55 },
   text: { flex: 1, gap: 2 },
   title: { fontSize: 17, fontWeight: "700", color: colors.ink },
   muted: { fontSize: 14, color: colors.muted, lineHeight: 20 },

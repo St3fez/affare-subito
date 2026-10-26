@@ -31,8 +31,10 @@ export function formatCurrency(value: number): string {
   }).format(value || 0);
 }
 
+/** "3,6%", "−1,3%": virgola decimale e segno meno tipografico. */
 export function formatPercent(value: number): string {
-  return `${value.toFixed(1)}%`;
+  const text = Math.abs(value).toFixed(1).replace(".", ",");
+  return `${value < 0 && text !== "0,0" ? "−" : ""}${text}%`;
 }
 
 /** Arrotonda ai centesimi. */

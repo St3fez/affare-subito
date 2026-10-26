@@ -14,6 +14,8 @@ const COPY: Record<Usage, { title: string; blurb: string }> = {
   airbnb: { title: "Airbnb", blurb: "Affitti brevi, più incerto" },
 };
 
+export const USAGE_TITLES = Object.fromEntries(Object.entries(COPY).map(([usage, copy]) => [usage, copy.title])) as Record<Usage, string>;
+
 /** Una voce dell'elenco degli usi: titolo e resa sempre visibili, i conti si aprono con un tocco. */
 export function StrategyCard({
   result,

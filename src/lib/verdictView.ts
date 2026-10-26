@@ -9,12 +9,26 @@ const HEADLINE = {
 const REFERENCE = { sale: "valore medio", rent: "canone medio" } as const;
 const TONE = { sotto: "good", in_linea: "neutral", sopra: "bad" } as const;
 
+/** Se i valori vengono da una zona riconosciuta o dalla media di tutto il comune, e quante zone ha quel comune. */
+export type VerdictScope = { precision: "zona" | "comune"; zoneCount: number };
+
+/** La zona dell'annuncio non è stata riconosciuta e il comune ha più zone: il confronto è con la media di tutto il comune. */
+export const isCityAverage = (scope?: VerdictScope) => scope?.precision === "comune" && scope.zoneCount > 1;
+
 /**
- * Titolo, tono e dettaglio del verdetto. Se i valori di mercato sono vecchi (`staleWarning`) non si dà un giudizio
- * rosso o verde: il confronto resta visibile ma dichiarato datato, perché il titolo è ciò che l'utente ricorda.
+ * Titolo, tono e dettaglio del verdetto. Non si dà un giudizio rosso o verde quando il confronto è debole, perché il titolo è
+ * ciò che l'utente ricorda: valori di mercato vecchi (`staleWarning`), oppure la media di un comune con più zone (in una città
+ * le zone vanno dalla periferia al centro, e la media non dice nulla della casa).
  */
-export function presentVerdict(verdict: Verdict, staleWarning: string | null, semester?: string): VerdictView {
+export function presentVerdict(verdict: Verdict, staleWarning: string | null, semester?: string, scope?: VerdictScope): VerdictView {
   const gap = `${verdict.gapPct >= 0 ? "+" : "−"}${Math.abs(Math.round(verdict.gapPct))}%`;
+  if (isCityAverage(scope)) {
+    return {
+      headline: "Confronto con la media del comune",
+      tone: "neutral",
+      detail: `${gap} rispetto al ${REFERENCE[verdict.kind]} di tutto il comune: non ho riconosciuto la zona dell'annuncio tra quelle dell'OMI, e in una città le zone sono molto diverse.`,
+    };
+  }
   if (staleWarning) {
     const year = semester?.match(/^(\d{4})/)?.[1];
     return {

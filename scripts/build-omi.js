@@ -68,8 +68,14 @@ function toRange(min, max) {
   return a !== null && b !== null ? { min: a, max: b } : null;
 }
 
+const LOWERCASE_WORDS = new Set(["di", "del", "della", "dei", "delle", "degli", "dello", "e", "in", "sul", "sulla", "nel", "nella", "al", "alla", "da", "a", "su", "con", "per", "dell", "nell", "all", "sull", "dall"]);
+
+/** "SAN LAZZARO DI SAVENA" → "San Lazzaro di Savena"; "REGGIO NELL'EMILIA" → "Reggio nell'Emilia". */
 function titleCase(name) {
-  return name.toLowerCase().replace(/(^|[\s'-])(\p{L})/gu, (_, separator, letter) => separator + letter.toUpperCase());
+  return name.toLowerCase().replace(/(^|[\s'`-])(\p{L}+)/gu, (_, separator, word, offset) => {
+    const connector = offset > 0 && separator === " " && LOWERCASE_WORDS.has(word);
+    return separator + (connector ? word : word.charAt(0).toUpperCase() + word.slice(1));
+  });
 }
 
 function buildOmi(valoriCsv, zoneCsv, semester) {

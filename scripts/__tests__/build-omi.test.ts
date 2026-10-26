@@ -54,6 +54,15 @@ test("un valore vuoto non fa saltare lo script: manca solo quell'intervallo", ()
   expect(b5.sale.ottimo).toEqual({ min: 900, max: 1350 });
 });
 
+test("nomi dei comuni in maiuscolo diventano leggibili, con le preposizioni minuscole", () => {
+  const rename = (csv: string, to: string) => csv.split("CASAGIOVE").join(to);
+  const names = ["SAN LAZZARO DI SAVENA", "SANT'OMOBONO TERME", "REGGIO NELL'EMILIA", "DI CASTELLO"].map((raw) => {
+    const omi = buildOmi(rename(valori, raw), rename(zone, raw), "2018-S2");
+    return omi.comuni[`${raw}|CE`].name;
+  });
+  expect(names).toEqual(["San Lazzaro di Savena", "Sant'Omobono Terme", "Reggio nell'Emilia", "Di Castello"]);
+});
+
 test("BOM iniziale e righe vuote finali non rompono la lettura", () => {
   const omi = buildOmi("﻿" + valori + "\n\n", zone, "2018-S2");
   expect(casagiove(omi).zones).toHaveLength(4);

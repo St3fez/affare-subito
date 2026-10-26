@@ -7,15 +7,16 @@ e dice "nessun riferimento di mercato".
 ## Generare il file
 
 1. Scaricare le quotazioni di un semestre recente dall'area riservata dell'Agenzia (SPID, CIE o Fisconline/Entratel):
-   "Forniture dati OMI" → **Quotazioni** (non "Perimetri", che sono i confini delle zone in KML), intero territorio nazionale.
-   Lo zip contiene due CSV, `QI_…_VALORI.csv` e `QI_…_ZONE.csv`, dello stesso semestre.
+   "Forniture dati OMI" → Quotazioni, intero territorio nazionale. Lo zip contiene due CSV, `QI_…_VALORI.csv` e
+   `QI_…_ZONE.csv`, dello stesso semestre (circa 2 MB compressi). La fornitura con i perimetri (circa 110 MB) contiene gli stessi
+   due CSV più un KML per comune con i confini delle zone: all'app servono solo i CSV.
 2. `node scripts/build-omi.js --valori <…_VALORI.csv> --zone <…_ZONE.csv> --out src/data/omi.json`
 
 Lo script legge il semestre dalla prima riga dei file ufficiali ("… - Semestre 2024/2 - …") e si ferma se VALORI e ZONE sono di
 semestri diversi. Legge anche la copia di `ondata/quotazioni-immobiliari-agenzia-entrate` (separatore virgola, senza semestre:
 va aggiunto `--semester 2018-S2`), che però si ferma al 2018 e **non va usata per una versione pubblicata**.
 
-Il secondo semestre 2024 dà 7.889 comuni e 22.847 zone con valori residenziali, circa 4 MB.
+Il primo semestre 2026 dà 7.887 comuni e 22.848 zone con valori residenziali, circa 4 MB.
 
 ## Cose da sapere sui file
 

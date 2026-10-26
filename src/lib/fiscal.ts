@@ -1,3 +1,5 @@
+import { roundCents as cents } from "./format";
+
 /** Un parametro con la sua fonte; `verifiedAt` (AAAA-MM-GG) è null finché non è stato controllato sulla fonte. */
 export type Param<T> = { value: T; source: string; verifiedAt: string | null };
 
@@ -71,7 +73,6 @@ export type Acquisition = {
   outlay: number;
 };
 
-const cents = (value: number) => Math.round(value * 100) / 100;
 
 /**
  * Acquisto da privato: l'imposta di registro si calcola sul prezzo (senza il "prezzo-valore"),

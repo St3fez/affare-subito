@@ -704,3 +704,21 @@ export function syncEntitlement(b: Billing, s: UsageState): Promise<UsageState>;
 | Archivio e confronto | 12, 17 |
 | Pulizia moduli, permessi, `App.tsx` | 18 |
 | Privacy, scheda Play, licenza OMI | 19 |
+
+---
+
+## Stato dell'esecuzione (26/10/2026)
+
+Task 0–18 completati e committati sul ramo `feat/compratori`; revisione finale dell'intero ramo fatta e corretta (193 test, `tsc` pulito). Il Task 19 è **parziale**: manca ciò che richiede una persona.
+
+**Da fare prima di pubblicare**
+- [ ] **Dati OMI recenti.** Il file `src/data/omi.json` oggi viene dal 2018-S2 (l'unica copia pubblica). Serve un download recente (accesso Fisconline/Entratel) e `node scripts/build-omi.js …` (vedi `docs/dati-omi.md`).
+- [ ] **Licenza OMI.** Chiarirla per iscritto con l'Agenzia: la pagina "Forniture dati" cita CC-BY 4.0, le condizioni contrattuali vietano di cedere i contenuti a terzi. Solo dopo, togliere il divieto di commit di `src/data/omi.json`.
+- [ ] **Raise della memoria di Gradle.** `android/gradle.properties` riga 13 (`-XX:MaxMetaspaceSize=512m`) fa fallire `bundleRelease` con R8 (`OutOfMemoryError: Metaspace`); con `-Xmx4096m -XX:MaxMetaspaceSize=1024m` il bundle si costruisce.
+- [ ] **Play Console.** Profilo pagamenti, app, prodotto `contributo_annuale` (abbonamento da 0,99 €, prepagato 12 mesi se consentito, altrimenti a rinnovo automatico), account tester, test interno con l'AAB firmato; provare 3 gratis → quarto bloccato → acquisto → ripristino → scadenza.
+- [ ] **Testo della schermata del contributo** (`PaywallScreen.tsx`): dire se si rinnova, togliere "non serve un account" (serve un account Google), titolo diverso per chi ha il contributo scaduto.
+- [ ] **Valori da verificare** (segnati "stima" nell'app): provvigione dell'agenzia e onorario del notaio (`fiscal.ts`), costi dei lavori e dell'arredo (`costs.ts`).
+- [ ] **Scheda Play**, `versionCode`, commit delle modifiche di firma in `android/` e di `assets/store/` (oggi non committate).
+- [ ] **Build di rilascio senza** `EXPO_PUBLIC_FAKE_BILLING` (con quella variabile il contributo è finto).
+
+I rilievi minori della revisione e le decisioni prese durante l'esecuzione sono nel registro `.superpowers/sdd/2026-10-26-affare-subito-compratori/progress.md`.

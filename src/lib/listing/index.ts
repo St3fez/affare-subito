@@ -17,6 +17,17 @@ export function readListing(source: ListingSource): ListingData | null {
   return listing.price == null && listing.sqm == null && !listing.city ? null : listing;
 }
 
+/** Annuncio vuoto per l'inserimento a mano; `id` identifica questa sessione, così ritoccare i dati non conta come un'altra analisi. */
+export function emptyManualListing(id: string): ListingData {
+  return {
+    ...manualListing({ price: 0, sqm: 0, city: "", province: "", condition: null }),
+    listingKey: `manual:${id}`,
+    title: "Immobile",
+    price: null,
+    sqm: null,
+  };
+}
+
 export function manualListing(input: {
   price: number;
   sqm: number;

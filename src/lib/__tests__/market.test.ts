@@ -80,6 +80,43 @@ test("senza sigla vale il nome solo se è univoco", () => {
   expect(lookupMarket(omi, { city: "Samone", province: "TN", zone: "" })!.sale.normale).toEqual({ min: 1800, max: 2200 });
 });
 
+// L'OMI usa le province catastali, precedenti a quelle nuove: Monza sta sotto MI, Forlì è "FO", la Sardegna ha solo CA, SS, NU, OR.
+const catastali: OmiData = {
+  semester: "2024-S2",
+  comuni: Object.fromEntries(
+    [
+      ["Monza", "MI"],
+      ["Forli`", "FO"],
+      ["Pesaro", "PS"],
+      ["Fermo", "AP"],
+      ["Barletta", "BA"],
+      ["Margherita di Savoia", "FG"],
+      ["Olbia", "SS"],
+      ["Carbonia", "CA"],
+      ["Tortoli`", "NU"],
+      ["Samone", "TO"],
+      ["Samone", "TN"],
+    ].map(([name, province]) => [`${name}|${province}`, comune(name, province, [zone("B1", "Centro", { normale: { min: 1000, max: 1500 } })])])
+  ),
+};
+
+test("le sigle delle province nuove trovano la provincia catastale dell'OMI", () => {
+  const found = (city: string, province: string) => lookupMarket(catastali, { city, province, zone: "" })?.label;
+  expect(found("Monza", "MB")).toBe("comune di Monza");
+  expect(found("Forlì", "FC")).toBe("comune di Forli`");
+  expect(found("Pesaro", "PU")).toBe("comune di Pesaro");
+  expect(found("Fermo", "FM")).toBe("comune di Fermo");
+  expect(found("Barletta", "BT")).toBe("comune di Barletta");
+  expect(found("Margherita di Savoia", "BT")).toBe("comune di Margherita di Savoia");
+  expect(found("Olbia", "OT")).toBe("comune di Olbia");
+  expect(found("Carbonia", "SU")).toBe("comune di Carbonia");
+  expect(found("Tortolì", "OG")).toBe("comune di Tortoli`");
+});
+
+test("la sigla nuova non apre la porta a un comune omonimo di un'altra provincia", () => {
+  expect(lookupMarket(catastali, { city: "Samone", province: "MB", zone: "" })).toBeNull();
+});
+
 test("sigla sbagliata o comune assente → null", () => {
   expect(lookupMarket(omi, { city: "Milano", province: "XX", zone: "" })).toBeNull();
   expect(lookupMarket(omi, { city: "Atlantide", province: "XX", zone: "" })).toBeNull();

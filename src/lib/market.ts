@@ -59,6 +59,22 @@ function zoneScore(listingZone: string, description: string): number {
   return shorter.every((word) => longer.includes(word)) ? shorter.length : 0;
 }
 
+const SARDEGNA_CATASTALE = ["CA", "SS", "NU", "OR"];
+
+/** L'OMI usa le province catastali: le sigle nate dopo (e quelle sarde, cambiate più volte) cercano in quelle da cui vengono. */
+const CATASTAL_PROVINCES: Record<string, string[]> = {
+  MB: ["MI"],
+  FC: ["FO"],
+  PU: ["PS"],
+  FM: ["AP"],
+  BT: ["BA", "FG"],
+  SU: SARDEGNA_CATASTALE,
+  CI: SARDEGNA_CATASTALE,
+  VS: SARDEGNA_CATASTALE,
+  OG: SARDEGNA_CATASTALE,
+  OT: SARDEGNA_CATASTALE,
+};
+
 const indexes = new WeakMap<OmiData, Map<string, OmiComune[]>>();
 
 function indexFor(omi: OmiData): Map<string, OmiComune[]> {
@@ -80,7 +96,8 @@ export function lookupMarket(omi: OmiData, query: { city: string; province: stri
 
   const candidates = indexFor(omi).get(cityKey) ?? [];
   const province = query.province.trim().toUpperCase();
-  const matches = province ? candidates.filter((c) => c.province.toUpperCase() === province) : candidates;
+  const accepted = [province, ...(CATASTAL_PROVINCES[province] ?? [])];
+  const matches = province ? candidates.filter((c) => accepted.includes(c.province.toUpperCase())) : candidates;
   if (matches.length !== 1) return null; // assente, oppure ambiguo senza sigla della provincia
   const comune = matches[0];
 

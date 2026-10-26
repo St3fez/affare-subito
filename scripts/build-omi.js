@@ -174,6 +174,6 @@ function main(argv) {
   console.log(`${args.out}: ${comuni} comuni, ${zones} zone, ${(fs.statSync(args.out).size / 1048576).toFixed(2)} MB`);
 }
 
-module.exports = { buildOmi, parseCsv };
+module.exports = { buildOmi, parseCsv, readCsv, toNumber, RESIDENTIAL_TYPES };
 
 if (require.main === module) main(process.argv.slice(2));

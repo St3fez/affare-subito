@@ -37,8 +37,9 @@ describe("contratto: vendita o affitto", () => {
     expect(parseListingText("Bilocale Roma 249.000 € 48 m²").contract).toBe("unknown");
   });
 
-  test("un annuncio d'affitto non si analizza", () => {
+  test("un annuncio d'affitto con un importo da vendita: resta un affitto, con un avviso sul canone", () => {
     const listing = parseListingText("Appartamento in affitto a Milano, 90.000 € di cauzione, 70 m²");
-    expect(checkListing(listing).blocking).toContain("not_a_sale");
+    expect(listing.contract).toBe("rent");
+    expect(checkListing(listing).warnings).toContain("looks_like_sale");
   });
 });

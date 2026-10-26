@@ -35,6 +35,7 @@ const draft: ListingDraft = {
   province: "BS",
   zone: "Loggia - Garibaldi",
   condition: "abitabile",
+  contract: "sale",
 };
 
 test("annuncio → campi di testo", () => {
@@ -51,6 +52,7 @@ test("dati mancanti → campi vuoti", () => {
     province: "",
     zone: "",
     condition: null,
+    contract: "sale",
   });
 });
 
@@ -98,7 +100,17 @@ test("riassunto dell'annuncio", () => {
 });
 
 test("ogni problema ha una spiegazione in italiano", () => {
-  const issues: Issue[] = ["not_a_sale", "not_residential", "price_missing", "sqm_missing", "city_missing", "sqm_implausible"];
+  const issues: Issue[] = [
+    "not_a_sale",
+    "not_a_rent",
+    "not_residential",
+    "price_missing",
+    "sqm_missing",
+    "city_missing",
+    "sqm_implausible",
+    "looks_like_sale",
+    "looks_like_rent",
+  ];
   for (const issue of issues) expect(describeIssue(issue).length).toBeGreaterThan(10);
 });
 
@@ -112,4 +124,14 @@ test("annuncio vuoto per l'inserimento a mano", () => {
     city: "",
     condition: null,
   });
+});
+
+test("vendita o affitto: si legge dall'annuncio e si può cambiare", () => {
+  expect(draftFromListing({ ...listing, contract: "rent" }).contract).toBe("rent");
+  expect(draftFromListing({ ...listing, contract: "unknown" }).contract).toBe("sale");
+  expect(applyDraft(listing, { ...draft, contract: "rent" }).contract).toBe("rent");
+});
+
+test("nel riassunto di un affitto il canone è al mese", () => {
+  expect(describeListing({ ...listing, contract: "rent", price: 900 })).toMatch(/· 900\s€ al mese$/);
 });

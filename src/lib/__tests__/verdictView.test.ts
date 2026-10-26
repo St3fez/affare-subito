@@ -1,7 +1,8 @@
 import { presentVerdict } from "../verdictView";
 import type { Verdict } from "../verdict";
 
-const verdict = (level: Verdict["level"], gapPct: number): Verdict => ({
+const verdict = (level: Verdict["level"], gapPct: number, kind: Verdict["kind"] = "sale"): Verdict => ({
+  kind,
   level,
   gapPct,
   pricePerSqm: 3000,
@@ -22,4 +23,9 @@ test("con valori vecchi: nessun titolo rosso o verde, il confronto è dichiarato
   expect(view.headline).not.toMatch(/sopra|sotto|linea/i);
   expect(view.headline).toMatch(/2018/);
   expect(view.detail).toContain("+57%");
+});
+
+test("per un affitto il titolo parla di canone", () => {
+  expect(presentVerdict(verdict("sotto", -20, "rent"), null)).toMatchObject({ headline: "Canone sotto il mercato", tone: "good" });
+  expect(presentVerdict(verdict("sopra", 15, "rent"), null).detail).toBe("+15% rispetto al canone medio della fascia di zona");
 });

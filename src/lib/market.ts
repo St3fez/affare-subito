@@ -9,6 +9,9 @@ export type MarketReference = {
   /** €/mq al mese */
   rent: Partial<Record<OmiState, Range>>;
   semester: string;
+  /** Il comune e le zone da cui vengono i valori: servono a ritrovarne l'andamento nello storico. */
+  istat: string;
+  zoneCodes: string[];
 };
 
 const STATES: OmiState[] = ["ottimo", "normale", "scadente"];
@@ -112,5 +115,7 @@ export function lookupMarket(omi: OmiData, query: { city: string; province: stri
     sale: combine(zones, "sale"),
     rent: combine(zones, "rent"),
     semester: omi.semester,
+    istat: comune.istat,
+    zoneCodes: zones.map((zone) => zone.code),
   };
 }

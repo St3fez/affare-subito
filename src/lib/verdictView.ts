@@ -2,7 +2,11 @@ import type { Verdict } from "./verdict";
 
 export type VerdictView = { headline: string; tone: "good" | "neutral" | "bad"; detail: string };
 
-const HEADLINE = { sotto: "Sotto il mercato", in_linea: "In linea con il mercato", sopra: "Sopra il mercato" } as const;
+const HEADLINE = {
+  sale: { sotto: "Sotto il mercato", in_linea: "In linea con il mercato", sopra: "Sopra il mercato" },
+  rent: { sotto: "Canone sotto il mercato", in_linea: "Canone in linea con il mercato", sopra: "Canone sopra il mercato" },
+} as const;
+const REFERENCE = { sale: "valore medio", rent: "canone medio" } as const;
 const TONE = { sotto: "good", in_linea: "neutral", sopra: "bad" } as const;
 
 /**
@@ -19,5 +23,9 @@ export function presentVerdict(verdict: Verdict, staleWarning: string | null, se
       detail: `${gap} rispetto a quei valori: oggi i prezzi possono essere molto diversi`,
     };
   }
-  return { headline: HEADLINE[verdict.level], tone: TONE[verdict.level], detail: `${gap} rispetto al valore medio della fascia di zona` };
+  return {
+    headline: HEADLINE[verdict.kind][verdict.level],
+    tone: TONE[verdict.level],
+    detail: `${gap} rispetto al ${REFERENCE[verdict.kind]} della fascia di zona`,
+  };
 }

@@ -7,8 +7,19 @@ test("blocking", () => {
   expect(checkListing({ ...base, price: null }).blocking).toContain("price_missing");
   expect(checkListing({ ...base, sqm: null }).blocking).toContain("sqm_missing");
   expect(checkListing({ ...base, city: "" }).blocking).toContain("city_missing");
-  expect(checkListing({ ...base, contract: "rent" }).blocking).toContain("not_a_sale");
   expect(checkListing(base).blocking).toEqual([]);
+});
+
+test("gli affitti si analizzano: nessun blocco", () => {
+  expect(checkListing({ ...base, contract: "rent", price: 900 })).toEqual({ blocking: [], warnings: [] });
+});
+
+test("un prezzo che sembra dell'altro contratto → avviso", () => {
+  expect(checkListing({ ...base, contract: "rent", price: 250000 }).warnings).toContain("looks_like_sale");
+  expect(checkListing({ ...base, contract: "sale", price: 900 }).warnings).toContain("looks_like_rent");
+  expect(checkListing({ ...base, contract: "unknown", price: 900 }).warnings).toContain("looks_like_rent");
+  expect(checkListing({ ...base, contract: "rent", price: 20000 }).warnings).toEqual([]);
+  expect(checkListing({ ...base, contract: "sale", price: 10000 }).warnings).toEqual([]);
 });
 
 test("metri quadri assurdi → avviso, non blocco", () => {

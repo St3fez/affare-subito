@@ -66,6 +66,8 @@ export function analyzeListing(
   settings: AnalysisSettings,
   deps: { omi: OmiData; fiscal: FiscalTable; costs: CostTable }
 ): Analysis {
+  // Gli affitti hanno la loro analisi (`analyzeRental`).
+  if (listing.contract === "rent") return { kind: "unsupported", reason: "not_a_sale" };
   const { blocking, warnings } = checkListing(listing);
   if (blocking.length > 0) return { kind: "unsupported", reason: blocking[0] };
 

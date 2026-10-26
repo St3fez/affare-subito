@@ -1,6 +1,15 @@
 export type Condition = "pronto" | "abitabile" | "da_rinfrescare" | "da_ristrutturare";
 
-export type Issue = "not_a_sale" | "not_residential" | "price_missing" | "sqm_missing" | "city_missing" | "sqm_implausible";
+export type Issue =
+  | "not_a_sale"
+  | "not_a_rent"
+  | "not_residential"
+  | "price_missing"
+  | "sqm_missing"
+  | "city_missing"
+  | "sqm_implausible"
+  | "looks_like_sale"
+  | "looks_like_rent";
 
 export type ListingData = {
   source: "nextData" | "text" | "manual";
@@ -46,5 +55,14 @@ export type OmiComune = { istat: string; name: string; province: string; zones: 
 
 /** Chiave: nome del comune come nel CSV + "|" + sigla della provincia, per esempio "MILANO|MI". */
 export type OmiData = { semester: string; comuni: Record<string, OmiComune> };
+
+/**
+ * Storico OMI per i grafici: per ogni zona ("<istat>|<codice zona>") il valore centrale della forchetta "normale",
+ * vendita in €/mq e affitto in €/mq al mese, un valore per semestre (null se quel semestre manca).
+ */
+export type OmiHistory = {
+  semesters: string[];
+  zones: Record<string, { sale: (number | null)[]; rent: (number | null)[] }>;
+};
 
 export type Usage = "live" | "longTerm" | "students" | "airbnb";

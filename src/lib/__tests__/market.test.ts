@@ -61,6 +61,11 @@ test("zona sconosciuta → comune", () =>
 test("parole generiche non bastano per abbinare una zona", () =>
   expect(lookupMarket(omi, { city: "Milano", province: "MI", zone: "Zona via" })?.precision).toBe("comune"));
 
+test("dice quali zone ha usato e di quale comune, per ritrovarne l'andamento", () => {
+  expect(lookupMarket(omi, { city: "Milano", province: "MI", zone: "Lambrate" })).toMatchObject({ istat: "0", zoneCodes: ["C1"] });
+  expect(lookupMarket(omi, { city: "Milano", province: "MI", zone: "" })!.zoneCodes).toEqual(["B12", "C1", "D1", "B3"]);
+});
+
 test("una zona che corrisponde a più voci → mediana di quelle voci", () => {
   const m = lookupMarket(omi, { city: "Tieville", province: "TV", zone: "Centro" });
   expect(m).toMatchObject({ precision: "zona", sale: { normale: { min: 2000, max: 3000 } } });

@@ -28,3 +28,8 @@ export function createFakeBilling(now: () => Date = () => new Date()): Billing {
     },
   };
 }
+
+/** Toglie l'acquisto di prova. Serve ai test sul telefono. */
+export async function resetFakeBilling(): Promise<void> {
+  await AsyncStorage.removeItem(KEY);
+}

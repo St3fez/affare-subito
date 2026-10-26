@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { createFakeBilling } from "../fakeBilling";
+import { createFakeBilling, resetFakeBilling } from "../fakeBilling";
 
 beforeEach(() => AsyncStorage.clear());
 
@@ -28,4 +28,11 @@ test("alla scadenza non è più attivo", async () => {
 
 test("il prezzo è quello del contributo", async () => {
   expect(await createFakeBilling().localizedPrice()).toBe("0,99 €");
+});
+
+test("resetFakeBilling toglie l'acquisto di prova", async () => {
+  const billing = createFakeBilling(() => new Date("2026-11-01T00:00:00Z"));
+  await billing.purchaseYear();
+  await resetFakeBilling();
+  expect(await billing.getActiveUntil()).toBeNull();
 });

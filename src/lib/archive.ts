@@ -73,3 +73,8 @@ export async function loadUsage(): Promise<UsageState> {
 export async function saveUsage(state: UsageState): Promise<void> {
   await AsyncStorage.setItem(USAGE_KEY, JSON.stringify(state));
 }
+
+/** Azzera archivio e stato d'uso (le chiavi della v1 restano). Serve ai test sul telefono. */
+export async function clearAllData(): Promise<void> {
+  await AsyncStorage.multiRemove([ARCHIVE_KEY, USAGE_KEY]);
+}

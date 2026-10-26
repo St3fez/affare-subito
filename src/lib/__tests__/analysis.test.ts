@@ -97,6 +97,12 @@ test("l'affitto di zona è il punto medio della forchetta OMI", () => {
   expect(longTerm.monthlyIncome).toBeCloseTo(916.67, 2); // 10 €/mq × 100 mq, meno un mese di vacanza all'anno
 });
 
+test("l'affitto al mq usato nei conti", () => {
+  expect(ok(listing).rentSqm).toBe(10); // punto medio di 9-11 €/mq
+  expect(ok(listing, { ...DEFAULT_SETTINGS, manualRentSqm: 20 }).rentSqm).toBe(20);
+  expect(ok(unknownCity).rentSqm).toBe(0);
+});
+
 test("lavori a mano", () => expect(ok(listing, { ...DEFAULT_SETTINGS, renovationOverride: 5000 }).renovation).toBe(5000));
 
 test("stato sconosciuto → nessun costo di lavori inventato", () =>

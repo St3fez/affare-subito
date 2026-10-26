@@ -41,6 +41,8 @@ export type Analysis =
       acquisition: Acquisition;
       renovation: number;
       mortgageMonthly: number;
+      /** Affitto al mq (€ al mese) usato nei conti: quello inserito a mano, altrimenti quello di zona, altrimenti 0. */
+      rentSqm: number;
       strategies: StrategyResult[];
       totalToEnter: Record<Usage, number>;
       warnings: Issue[];
@@ -108,5 +110,5 @@ export function analyzeListing(
     USAGES.map((usage) => [usage, roundCents(acquisition.outlay + renovation + furnishing[usage])])
   ) as Record<Usage, number>;
 
-  return { kind: "ok", listing, market, verdict, acquisition, renovation, mortgageMonthly, strategies, totalToEnter, warnings };
+  return { kind: "ok", listing, market, verdict, acquisition, renovation, mortgageMonthly, rentSqm, strategies, totalToEnter, warnings };
 }

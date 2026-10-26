@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { DEFAULT_SETTINGS } from "../analysis";
-import { deleteAnalysis, loadArchive, loadUsage, saveAnalysis, saveUsage, type SavedAnalysis } from "../archive";
+import { clearAllData, deleteAnalysis, loadArchive, loadUsage, saveAnalysis, saveUsage, type SavedAnalysis } from "../archive";
 import { emptyUsage } from "../entitlement";
 import type { ListingData } from "../types";
 
@@ -108,4 +108,14 @@ test("lo stato vuoto restituito non è condiviso tra chiamate", async () => {
   const first = await loadUsage();
   first.analyzedKeys.push("zzz");
   expect((await loadUsage()).analyzedKeys).toEqual([]);
+});
+
+test("clearAllData svuota archivio e stato d'uso ma non le chiavi della v1", async () => {
+  await AsyncStorage.setItem("affare_subito_analyses", "vecchio");
+  await saveAnalysis(saved("1", "a", "2026-11-01T10:00:00.000Z"));
+  await saveUsage({ analyzedKeys: ["a"], activeUntil: null });
+  await clearAllData();
+  expect(await loadArchive()).toEqual([]);
+  expect(await loadUsage()).toEqual(emptyUsage);
+  expect(await AsyncStorage.getItem("affare_subito_analyses")).toBe("vecchio");
 });

@@ -19,6 +19,7 @@
     "@react-native-community/slider": "5.1.2",
     "@react-native-ml-kit/text-recognition": "^2.0.0",
     "expo": "~55.0.5",
+    "expo-iap": "^6.3.0",
     "expo-image-picker": "~55.0.11",
     "expo-speech": "^55.0.8",
     "expo-speech-recognition": "^3.1.1",

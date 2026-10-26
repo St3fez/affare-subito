@@ -119,3 +119,12 @@ test("clearAllData svuota archivio e stato d'uso ma non le chiavi della v1", asy
   expect(await loadUsage()).toEqual(emptyUsage);
   expect(await AsyncStorage.getItem("affare_subito_analyses")).toBe("vecchio");
 });
+
+test("eliminare un'analisi non restituisce le analisi gratuite già consumate", async () => {
+  const usage = { analyzedKeys: ["a", "b", "c"], activeUntil: null };
+  await saveUsage(usage);
+  await saveAnalysis(saved("1", "a", "2026-11-01T10:00:00.000Z"));
+  await deleteAnalysis("1");
+  expect(await loadArchive()).toEqual([]);
+  expect(await loadUsage()).toEqual(usage);
+});

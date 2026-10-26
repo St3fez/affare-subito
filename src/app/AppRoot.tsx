@@ -1,22 +1,23 @@
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useState } from "react";
-import { BackHandler, Linking, Text } from "react-native";
+import { BackHandler, Linking } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { getBilling, PurchaseCancelled } from "../billing";
 import { DEFAULT_SETTINGS, type AnalysisSettings } from "../lib/analysis";
 import { resetFakeBilling } from "../billing/fakeBilling";
-import { clearAllData, loadArchive, loadUsage, saveAnalysis, saveUsage, type SavedAnalysis } from "../lib/archive";
+import { clearAllData, deleteAnalysis, loadArchive, loadUsage, saveAnalysis, saveUsage, type SavedAnalysis } from "../lib/archive";
 import { listingUrlFromDeepLink } from "../lib/deepLink";
 import { applyPurchase, emptyUsage, isActive, registerAnalysis, type UsageState } from "../lib/entitlement";
 import { syncEntitlement } from "../lib/entitlementSync";
 import { emptyManualListing } from "../lib/listing";
 import type { ListingData } from "../lib/types";
+import { ArchiveScreen } from "../screens/ArchiveScreen";
+import { CompareScreen } from "../screens/CompareScreen";
 import { InputScreen } from "../screens/InputScreen";
 import { PaywallScreen } from "../screens/PaywallScreen";
 import { ResultScreen } from "../screens/ResultScreen";
 import { ReviewScreen } from "../screens/ReviewScreen";
-import { Card, Screen } from "../ui/components";
 
 type Pending = { listing: ListingData; settings: AnalysisSettings };
 
@@ -25,7 +26,8 @@ type Route =
   | { name: "review"; listing: ListingData; manual: boolean }
   | { name: "result"; item: SavedAnalysis; lastFree: boolean }
   | { name: "paywall"; pending: Pending }
-  | { name: "archive" };
+  | { name: "archive" }
+  | { name: "compare"; a: SavedAnalysis; b: SavedAnalysis };
 
 export default function AppRoot() {
   const [stack, setStack] = useState<Route[]>([{ name: "input" }]);
@@ -249,14 +251,21 @@ export default function AppRoot() {
       );
       break;
     case "archive":
-      // Segnaposto: l'archivio e il confronto arrivano con il Task 17.
       screen = (
-        <Screen title="Archivio" onBack={pop}>
-          <Card>
-            <Text>{archive.length} analisi salvate</Text>
-          </Card>
-        </Screen>
+        <ArchiveScreen
+          items={archive}
+          onOpen={(item) => push({ name: "result", item, lastFree: false })}
+          onDelete={async (id) => {
+            await deleteAnalysis(id);
+            setArchive(await loadArchive());
+          }}
+          onCompare={(a, b) => push({ name: "compare", a, b })}
+          onBack={pop}
+        />
       );
+      break;
+    case "compare":
+      screen = <CompareScreen a={route.a} b={route.b} onBack={pop} />;
       break;
   }
 

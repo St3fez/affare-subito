@@ -1,6 +1,7 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
 import {
+  KeyboardAvoidingView,
   ScrollView,
   StyleSheet,
   Text,
@@ -28,23 +29,30 @@ export function Screen({
   children: React.ReactNode;
   footer?: React.ReactNode;
 }) {
+  // Con edge-to-edge (obbligatorio da Android 15) la finestra non si ridimensiona più quando compare la tastiera: il
+  // KeyboardAvoidingView misura quanto la tastiera copre e alza campi e pulsante. Gli spazi ai lati servono quando lo schermo
+  // ruota (dai 600 dp in su Android 16 ignora il blocco in verticale); la colonna non si allarga oltre una larghezza leggibile.
   return (
-    <SafeAreaView style={styles.screen} edges={["top", "bottom"]}>
-      <View style={styles.header}>
-        {onBack ? (
-          <TouchableOpacity onPress={onBack} accessibilityRole="button" accessibilityLabel="Indietro" style={styles.back} hitSlop={12}>
-            <MaterialIcons name="arrow-back" size={24} color={colors.ink} />
-          </TouchableOpacity>
-        ) : null}
-        <View style={styles.headerText}>
-          <Text style={styles.title} numberOfLines={2}>{title}</Text>
-          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+    <SafeAreaView style={styles.screen} edges={["top", "bottom", "left", "right"]}>
+      <KeyboardAvoidingView style={styles.avoid} behavior="padding">
+        <View style={styles.column}>
+          <View style={styles.header}>
+            {onBack ? (
+              <TouchableOpacity onPress={onBack} accessibilityRole="button" accessibilityLabel="Indietro" style={styles.back} hitSlop={12}>
+                <MaterialIcons name="arrow-back" size={24} color={colors.ink} />
+              </TouchableOpacity>
+            ) : null}
+            <View style={styles.headerText}>
+              <Text style={styles.title} numberOfLines={2}>{title}</Text>
+              {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+            </View>
+          </View>
+          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+            {children}
+          </ScrollView>
+          {footer ? <View style={styles.footer}>{footer}</View> : null}
         </View>
-      </View>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {children}
-      </ScrollView>
-      {footer ? <View style={styles.footer}>{footer}</View> : null}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -148,6 +156,8 @@ export function Notice({ tone = "info", children }: { tone?: "info" | "warn" | "
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
+  avoid: { flex: 1 },
+  column: { flex: 1, width: "100%", maxWidth: 640, alignSelf: "center" },
   header: { flexDirection: "row", alignItems: "center", paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: space.sm },
   back: { marginRight: space.md },
   headerText: { flex: 1 },

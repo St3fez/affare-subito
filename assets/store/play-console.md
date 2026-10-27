@@ -1,6 +1,6 @@
 # Affare Subito: cosa serve alla Play Console
 
-Pacchetto `com.st3fez.affaresubito`, versione 1.0.0 (versionCode 1). Tutto in italiano.
+Pacchetto `com.st3fez.affaresubito`, versione 1.0.0 (versionCode 2026102701). Tutto in italiano.
 
 ## File da caricare
 
@@ -16,7 +16,22 @@ Il bundle è firmato con la chiave di rilascio `android/app/st3fez-release.jks` 
 entrambi fuori da git). Impronta SHA-256 del certificato di caricamento:
 `22:A6:C0:8D:F2:01:DE:57:0E:3B:BB:58:EE:B1:99:82:4D:1D:7F:F6:7B:24:A6:26:C6:8A:73:5B:83:01:FA:64`.
 Se la Console chiede di aderire a Play App Signing, accetta: la chiave sopra resta la chiave di caricamento.
-Se questo pacchetto è già stato caricato in passato con versionCode 1, alza `versionCode` in `android/app/build.gradle` e ricostruisci.
+Il `versionCode` ha la forma `AAAAMMGGNN` (data e numero del giorno): sta sopra qualunque numero piccolo caricato prima, e a ogni nuova versione
+basta rifarlo con la data di quel giorno (per esempio `2026110301`), perché Play non accetta due volte lo stesso numero né uno più basso.
+
+## Controlli tecnici (27/10/2026)
+
+| Requisito | Esito |
+|---|---|
+| Livello API | target 36, minimo 24 (Play chiede almeno 35 per le novità) |
+| 64 bit | arm64-v8a e x86_64 presenti |
+| Pagine da 16 KB | le 16 librerie native di arm64-v8a e di x86_64 hanno i segmenti allineati a 16 KB (`p_align` 0x4000, letto dalle intestazioni ELF del bundle); AGP 8.12.0. Le ABI a 32 bit restano a 4 KB, ed è corretto: i dispositivi a 16 KB sono solo a 64 bit |
+| Edge-to-edge | attivo (`edgeToEdgeEnabled=true`); `Screen` rispetta i margini del sistema sui quattro lati e alza campi e pulsante sopra la tastiera (`KeyboardAvoidingView`); la barra di stato non ha colori forzati |
+| API deprecate | restano chiamate a `Window.setStatusBarColor`, `setNavigationBarColor` e `layoutInDisplayCutoutMode`, ma solo dentro librerie (React Native, Material Components) e `setRequestedOrientation` nella WebView. Il nostro codice non le usa. La Console può mostrarle come avviso: non bloccano la pubblicazione e spariscono aggiornando React Native o Expo |
+| Schermi grandi | da 600 dp Android 16 ignora il blocco in verticale: l'app può ruotare. Le schermate hanno margini laterali e la colonna non supera 640 dp |
+| Fatturazione | Play Billing Library 9.1.0 (via expo-iap 6.3.0); Play chiede almeno la 7 |
+| Permessi | INTERNET, ACCESS_NETWORK_STATE, VIBRATE, BILLING. Nessun ID pubblicità. I permessi di archiviazione che aggiunge `expo-file-system` (fino ad Android 12L) sono tolti dal manifest: l'app non accede ai file |
+| Indietro predittivo | disattivato (`enableOnBackInvokedCallback=false`); consentito con target 36, da rivedere quando si passa a 37 |
 
 ## Il contributo (prodotto su Google Play)
 
@@ -80,7 +95,7 @@ Prima versione di Affare Subito: verdetto sul prezzo, costo per entrare, affitti
 
 - **Informativa sulla privacy:** https://st3fez.github.io/affare-subito/ (va letta la versione nuova: pubblicata quando il ramo `feat/compratori` entra in `main`).
 - **Accesso all'app:** tutte le funzioni sono disponibili senza account.
-- **Annunci:** l'app non contiene annunci.
+- **Annunci:** l'app non contiene annunci. **ID pubblicità:** non lo usa (nel manifest non c'è `AD_ID`): rispondi "No".
 - **Pubblico di destinazione:** solo adulti (18+); non è pensata per i bambini.
 - **Classificazione dei contenuti:** nessuna violenza, contenuto sessuale, linguaggio volgare, gioco d'azzardo o interazione tra utenti; è un'app di utilità.
 - **App di notizie, salute, enti pubblici:** no. **Funzioni finanziarie:** nessuna (non offre prestiti, banca o scambio di titoli: calcola solo stime).
@@ -93,7 +108,7 @@ Prima versione di Affare Subito: verdetto sul prezzo, costo per entrare, affitti
 
 ## Prima di premere "Invia"
 
-1. **Prova il pagamento vero.** Finora è stato provato solo con il pagamento finto: carica il bundle in un test interno, aggiungi il tuo account come tester di licenza e compra il contributo.
+1. **Pagamento vero:** già provato nel test interno. Il prodotto `contributo_annuale` deve restare attivo.
 2. **Account personale nuovo?** Google può richiedere un test chiuso con almeno 12 tester per 14 giorni prima di concedere l'accesso alla produzione: controlla in Console → Rilascia → Test e rilascio.
 3. **Screenshot:** da 2 a 8, vedi `assets/store/screenshots/`.
 4. Dopo l'invio, la revisione dura di solito da poche ore a qualche giorno.

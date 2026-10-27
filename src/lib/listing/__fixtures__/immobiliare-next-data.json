@@ -1,0 +1,50 @@
+{
+  "props": {
+    "pageProps": {
+      "detailData": {
+        "realEstate": {
+          "id": 123353645,
+          "contract": "sale",
+          "title": "Quadrilocale Contrada delle bassiche 45, Loggia - Garibaldi, Brescia",
+          "price": {
+            "value": 790000
+          },
+          "typology": {
+            "name": "Appartamento"
+          },
+          "properties": [
+            {
+              "surface": "200 m²",
+              "rooms": "4",
+              "bedRoomsNumber": "3",
+              "bathrooms": "2",
+              "floor": {
+                "floorOnlyValue": "interrato (-1), 2"
+              },
+              "elevator": true,
+              "garage": "1 in parcheggio/garage comune",
+              "condition": "Buono / Abitabile",
+              "conditionId": 2,
+              "costs": {
+                "condominiumExpenses": "€ 267/mese"
+              },
+              "energy": {
+                "class": {
+                  "name": "A2"
+                }
+              },
+              "location": {
+                "city": "Brescia",
+                "provinceId": "BS",
+                "macrozone": "Centro Storico",
+                "microzone": "Loggia - Garibaldi",
+                "latitude": 45.5378,
+                "longitude": 10.212
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -9,25 +9,35 @@
     "android:debug:apk": "set NODE_ENV=production&& cd android && gradlew.bat app:assembleDebug -x lint -x test --configure-on-demand --build-cache",
     "android:debug:install": "set NODE_ENV=production&& cd android && gradlew.bat app:installDebug -x lint -x test --configure-on-demand --build-cache",
     "android:release:bundle": "set NODE_ENV=production&& cd android && gradlew.bat app:bundleRelease -x lint -x test --configure-on-demand --build-cache",
-    "ios": "expo run:ios",
-    "web": "expo start --web"
+    "test": "jest"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/slider": "5.1.2",
-    "@react-native-ml-kit/text-recognition": "^2.0.0",
     "expo": "~55.0.5",
-    "expo-image-picker": "~55.0.11",
-    "expo-speech": "^55.0.8",
-    "expo-speech-recognition": "^3.1.1",
+    "expo-iap": "^6.3.0",
     "expo-status-bar": "~55.0.4",
     "react": "19.2.0",
     "react-native": "0.83.2",
-    "react-native-safe-area-context": "~5.6.2"
+    "react-native-safe-area-context": "~5.6.2",
+    "react-native-webview": "13.16.0"
   },
   "devDependencies": {
+    "@types/jest": "29.5.14",
     "@types/react": "~19.2.2",
+    "jest": "~29.7.0",
+    "jest-expo": "~55.0.22",
     "typescript": "~5.9.2"
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "setupFiles": [
+      "./jest.setup.js"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/android/"
+    ]
   }
 }

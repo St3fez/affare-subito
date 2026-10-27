@@ -11,7 +11,7 @@ import { formatCurrency } from "../lib/format";
 import { analyzeRental } from "../lib/rent";
 import { staleDataWarning } from "../lib/staleness";
 import { marketTrend } from "../lib/trend";
-import { presentVerdict } from "../lib/verdictView";
+import { marketSource, presentVerdict } from "../lib/verdictView";
 import { Button, Card, Divider, Notice, Row, Screen } from "../ui/components";
 import { chart, colors, space } from "../ui/theme";
 import { CONDITION_NOTE, TONE_COLOR } from "./ResultScreen";
@@ -60,7 +60,7 @@ export function RentResultScreen({ item, lastFree, onBack }: { item: SavedAnalys
             </Text>
           ) : null}
           <Text style={styles.small}>
-            {market?.label} · valori OMI {market?.semester} per immobili {CONDITION_NOTE[listing.condition ?? "abitabile"]}
+            {market ? marketSource(market) : ""} per immobili {CONDITION_NOTE[listing.condition ?? "abitabile"]}
           </Text>
         </Card>
       ) : (

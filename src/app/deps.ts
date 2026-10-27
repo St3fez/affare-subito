@@ -1,7 +1,7 @@
 import { COST_DEFAULTS } from "../lib/costs";
 import { FISCAL_DEFAULTS } from "../lib/fiscal";
-import { emptyOmi, normalizeHistory, normalizeOmi } from "../lib/omiData";
-import type { OmiData, OmiHistory } from "../lib/types";
+import { emptyOmi, normalizeHistory, normalizeOmi, normalizeZoneShapes } from "../lib/omiData";
+import type { OmiData, OmiHistory, OmiZoneShapes } from "../lib/types";
 
 /**
  * Il JSON OMI lo genera `scripts/build-omi.js` e non è nel repository (vedi docs/dati-omi.md). Se manca, l'app parte
@@ -29,9 +29,26 @@ export function getHistory(): OmiHistory | null {
   return history;
 }
 
-/** I dati di cui ha bisogno `analyzeListing`. */
+let shapes: OmiZoneShapes | null | undefined;
+
+/** I confini delle zone delle città più grandi (`scripts/build-omi-zones.js`): pesano qualche MB, quindi si caricano alla prima analisi. */
+export function getZoneShapes(): OmiZoneShapes | null {
+  if (shapes === undefined) {
+    try {
+      shapes = normalizeZoneShapes(require("../data/omi-zones.json"));
+    } catch {
+      shapes = null;
+    }
+  }
+  return shapes;
+}
+
+/** I dati di cui hanno bisogno `analyzeListing` e `analyzeRental`. */
 export const analysisDeps = {
   omi: loadOmi(),
   fiscal: FISCAL_DEFAULTS,
   costs: COST_DEFAULTS,
+  get shapes(): OmiZoneShapes | null {
+    return getZoneShapes();
+  },
 };

@@ -30,6 +30,20 @@ semestre; i semestri mancanti restano vuoti (nel grafico un buco nella linea). L
 2023 e il 2024 l'OMI ne ha ridisegnate circa l'8%, e per quelle la serie parte dal 2024. Dal 2021/1 al 2026/1 (senza il 2024/1)
 sono 22.503 zone, circa 2,7 MB. Senza il file l'app funziona e non mostra il grafico.
 
+## Zone dalla posizione dell'annuncio
+
+In una città le zone vanno dalla periferia al centro e la media del comune non dice nulla di una casa. Se l'annuncio ha le coordinate
+(immobiliare.it, tecnocasa.it), l'app trova la zona OMI in cui cade il punto, e il riferimento di mercato è quello della zona. Servono
+i confini, che stanno in `src/data/omi-zones.json` (fuori dal repository, come gli altri). Si generano dal download "Perimetri"
+dell'Agenzia (un file KML per comune, chiamato col codice catastale) e dal file VALORI dell'ultimo semestre:
+
+`node scripts/build-omi-zones.js --valori <2026-1_VALORI.csv> --kml-dir <cartella dei KML> --out src/data/omi-zones.json --min-zones 6 --tolerance 25`
+
+Solo i comuni con almeno `--min-zones` zone di case: sono quelli in cui la zona conta. Con 6 sono 563 comuni e 5.782 zone, circa 4,2 MB
+(tolleranza 25 m; con 12 m 6,4 MB). I contorni sono semplificati: vicino a un confine il punto può cadere nella zona accanto, e per questo
+la zona più piccola vince e si accetta un punto fino a 40 m fuori dai contorni. Il file si carica alla prima analisi; se manca o è
+rovinato l'app cerca la zona per nome, come prima. Quando la zona viene dalla posizione la schermata lo scrive.
+
 ## Cose da sapere sui file
 
 - Le province sono quelle **catastali**, precedenti alle ultime riforme: Monza sta sotto MI, Fermo sotto AP, Barletta-Andria-Trani

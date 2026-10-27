@@ -15,6 +15,12 @@ export type VerdictScope = { precision: "zona" | "comune"; zoneCount: number };
 /** La zona dell'annuncio non è stata riconosciuta e il comune ha più zone: il confronto è con la media di tutto il comune. */
 export const isCityAverage = (scope?: VerdictScope) => scope?.precision === "comune" && scope.zoneCount > 1;
 
+/** "zona Porta Romana, Milano · valori OMI 2026-S1": da dove vengono i valori, e se la zona l'ha trovata la posizione dell'annuncio. */
+export function marketSource(market: { label: string; semester: string; locatedBy?: "position" }): string {
+  const place = market.locatedBy === "position" ? `${market.label}, trovata dalla posizione dell'annuncio` : market.label;
+  return `${place} · valori OMI ${market.semester}`;
+}
+
 /**
  * Titolo, tono e dettaglio del verdetto. Non si dà un giudizio rosso o verde quando il confronto è debole, perché il titolo è
  * ciò che l'utente ricorda: valori di mercato vecchi (`staleWarning`), oppure la media di un comune con più zone (in una città

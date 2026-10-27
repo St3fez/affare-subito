@@ -1,4 +1,4 @@
-import type { OmiData, OmiHistory } from "./types";
+import type { OmiData, OmiHistory, OmiZoneShapes } from "./types";
 
 export const emptyOmi: OmiData = { semester: "", comuni: {} };
 
@@ -20,4 +20,11 @@ export function normalizeHistory(raw: unknown): OmiHistory | null {
   const data = raw as Partial<OmiHistory> | null | undefined;
   const valid = !!data && Array.isArray(data.semesters) && !!data.zones && typeof data.zones === "object" && !Array.isArray(data.zones);
   return valid ? (raw as OmiHistory) : null;
+}
+
+/** I confini generati da `scripts/build-omi-zones.js`; se mancano o hanno una forma sbagliata la zona si cerca solo per nome. */
+export function normalizeZoneShapes(raw: unknown): OmiZoneShapes | null {
+  const data = raw as Partial<OmiZoneShapes> | null | undefined;
+  const valid = !!data && data.version === 1 && !!data.comuni && typeof data.comuni === "object" && !Array.isArray(data.comuni);
+  return valid ? (raw as OmiZoneShapes) : null;
 }

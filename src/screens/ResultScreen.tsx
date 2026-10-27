@@ -13,7 +13,7 @@ import { describeIssue, describeListing } from "../lib/draft";
 import { formatCurrency, formatPercent } from "../lib/format";
 import { staleDataWarning } from "../lib/staleness";
 import { marketTrend } from "../lib/trend";
-import { presentVerdict } from "../lib/verdictView";
+import { marketSource, presentVerdict } from "../lib/verdictView";
 import type { Assumptions } from "../lib/strategies";
 import type { Usage } from "../lib/types";
 import { Button, Card, Divider, Notice, Row, Screen } from "../ui/components";
@@ -156,7 +156,7 @@ export function ResultScreen({
             label={`${view.headline}. ${view.detail}`}
           />
           <Text style={styles.small}>
-            {market?.label} · valori OMI {market?.semester} per immobili {CONDITION_NOTE[listing.condition ?? "abitabile"]}
+            {market ? marketSource(market) : ""} per immobili {CONDITION_NOTE[listing.condition ?? "abitabile"]}
           </Text>
         </Card>
       ) : (

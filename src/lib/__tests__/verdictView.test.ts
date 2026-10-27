@@ -1,4 +1,4 @@
-import { presentVerdict } from "../verdictView";
+import { marketSource, presentVerdict } from "../verdictView";
 import type { Verdict } from "../verdict";
 
 const verdict = (level: Verdict["level"], gapPct: number, kind: Verdict["kind"] = "sale"): Verdict => ({
@@ -41,4 +41,16 @@ test("zona non riconosciuta in un comune con più zone: confronto con la media d
 test("comune con una sola zona, o zona riconosciuta: verdetto normale", () => {
   expect(presentVerdict(verdict("sopra", 20), null, "2026-S1", { precision: "comune", zoneCount: 1 }).tone).toBe("bad");
   expect(presentVerdict(verdict("sopra", 20), null, "2026-S1", { precision: "zona", zoneCount: 1 }).tone).toBe("bad");
+});
+
+describe("fonte dei valori", () => {
+  const market = { label: "zona Porta Romana, Milano", semester: "2026-S1" };
+
+  test("senza la posizione: etichetta e semestre", () => {
+    expect(marketSource(market)).toBe("zona Porta Romana, Milano · valori OMI 2026-S1");
+  });
+
+  test("zona trovata dalla posizione dell'annuncio: lo dice", () => {
+    expect(marketSource({ ...market, locatedBy: "position" })).toBe("zona Porta Romana, Milano, trovata dalla posizione dell'annuncio · valori OMI 2026-S1");
+  });
 });

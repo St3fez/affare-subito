@@ -619,8 +619,9 @@ function cleanupLocation(value: string): string {
 function extractProvince(text: string): string {
   const compact = text.replace(/\n+/g, " ").replace(/\s+/g, " ").trim();
   const provincePatterns = [
-    /provincia(?:\s+di)?\s+([A-ZÀ-Ú][A-Za-zÀ-ú' -]{1,30})/iu,
-    /prov\.\s*([A-ZÀ-Ú][A-Za-zÀ-ú' -]{1,30})/iu,
+    // Senza il flag `i`: il nome comincia con la maiuscola, così "e provincia offrendo un servizio" non è una provincia.
+    /(?:[Pp]rovincia|PROVINCIA)(?:\s+(?:[Dd]i|DI))?\s+([A-ZÀ-Ú][A-Za-zÀ-ú' -]{1,30})/u,
+    /(?:[Pp]rov|PROV)\.\s*([A-ZÀ-Ú][A-Za-zÀ-ú' -]{1,30})/u,
     /\(([A-Z]{2})\)/u,
   ];
 
@@ -884,7 +885,8 @@ export function parseListingText(text: string, url?: string): ListingData {
     condoMonthly: found.condoMonthly ?? extractCondoMonthly(body),
     energyClass: found.energyClass ?? "",
     city: found.city ?? city,
-    province: found.province ?? extractProvince(text),
+    // Come per la zona: dalla descrizione di un portale che conosciamo non si ricava una provincia.
+    province: portal ? (found.province ?? "") : extractProvince(text),
     // Un portale che conosciamo e non indica il quartiere non ne ha: dal resto della pagina uscirebbero voci dei menu.
     zone: portal ? (found.zone ?? "") : zone,
     lat: null,

@@ -98,3 +98,15 @@ describe("falsi positivi sui testi dei portali", () => {
     expect(parseListingText(text.replace(/\n/g, " ")).price).toBe(950);
   });
 });
+
+describe("provincia", () => {
+  test("la parola 'provincia' in una frase non è il nome di una provincia", () => {
+    const text = "Bilocale in affitto a Torino, 750 €/mese, 48 m². L'agenzia opera a Torino e provincia offrendo un servizio professionale.";
+    expect(parseListingText(text).province).toBe("");
+  });
+
+  test("'provincia di Torino' e 'prov. Milano' si leggono ancora, anche in maiuscolo", () => {
+    expect(parseListingText("Bilocale in vendita a Chieri, provincia di Torino, 150.000 €, 60 m²").province).toBe("Torino");
+    expect(parseListingText("BILOCALE IN VENDITA A CHIERI - PROVINCIA DI TORINO - 150.000 € - 60 m²").province).toMatch(/^Torino$/i);
+  });
+});

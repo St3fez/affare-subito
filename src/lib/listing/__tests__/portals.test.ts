@@ -110,6 +110,48 @@ const tecnocasa: Array<[string, string, Expected]> = [
   ],
 ];
 
+const idealista: Array<[string, string, Expected]> = [
+  [
+    "idealista-sale-milano-lorenteggio",
+    "https://www.idealista.it/immobile/36193363/",
+    // Il prezzo è quello della scheda, non il vecchio prezzo barrato che compare accanto ("295.000 € 300.000 € 2%").
+    { contract: "sale", price: 295000, sqm: 70, rooms: 2, bedrooms: 1, bathrooms: 1, floor: "1", propertyType: "bilocale", city: "Milano", province: "", zone: "Lorenteggio - Giambellino", condition: "abitabile", condoMonthly: 170, hasElevator: true },
+  ],
+  [
+    "idealista-sale-milano-affori",
+    "https://www.idealista.it/immobile/35421086/",
+    { contract: "sale", price: 265000, sqm: 65, rooms: 2, bedrooms: 1, bathrooms: 1, floor: "3", city: "Milano", zone: "Affori", condition: "abitabile", condoMonthly: 175, hasElevator: true },
+  ],
+  [
+    "idealista-sale-milano-rogoredo",
+    "https://www.idealista.it/immobile/35471595/",
+    { contract: "sale", price: 285000, sqm: 90, rooms: 3, bedrooms: 2, bathrooms: 1, floor: "Rialzato", propertyType: "trilocale", city: "Milano", zone: "Rogoredo - Santa Giulia", condition: "abitabile", condoMonthly: 125, hasElevator: false },
+  ],
+  [
+    // Il comune ha due parole sole nel riassunto ("Santa Rita, Torino"): il quartiere è quello della sezione Posizione.
+    "idealista-rent-torino-santarita",
+    "https://www.idealista.it/immobile/35966165/",
+    { contract: "rent", price: 1500, sqm: 118, rooms: 4, bedrooms: 3, bathrooms: 2, floor: "3", propertyType: "quadrilocale", city: "Torino", zone: "Santa Rita", condition: "abitabile", condoMonthly: 100, hasElevator: true },
+  ],
+  [
+    // Senza quartiere si usa la zona. La descrizione dice "Torino e provincia offrendo un servizio": non è una provincia.
+    "idealista-rent-torino-crocetta",
+    "https://www.idealista.it/immobile/37286912/",
+    { contract: "rent", price: 750, sqm: 48, rooms: 2, bedrooms: 1, bathrooms: 1, floor: "5", propertyType: "bilocale", city: "Torino", province: "", zone: "Crocetta", condition: "abitabile", hasElevator: true },
+  ],
+  [
+    // "1 piano" tra le caratteristiche di una villa sono i piani dell'edificio, non il piano dell'appartamento.
+    "idealista-sale-lucca-villa",
+    "https://www.idealista.it/immobile/36047731/",
+    { contract: "sale", price: 800000, sqm: 350, rooms: 14, bathrooms: 3, propertyType: "villa", city: "Lucca", zone: "Sant'Anna", condition: "abitabile", floor: "" },
+  ],
+  [
+    "idealista-sale-lucca-villetta",
+    "https://www.idealista.it/immobile/37057254/",
+    { contract: "sale", price: 250000, sqm: 65, rooms: 2, bedrooms: 1, bathrooms: 1, propertyType: "villetta a schiera", city: "Lucca", zone: "Sant'Alessio", condition: "abitabile", condoMonthly: 158, floor: "" },
+  ],
+];
+
 // La pagina vera può andare a capo in modo diverso dalla mia ricostruzione: i due formati devono dare lo stesso risultato.
 const layouts: Array<[string, (text: string) => string]> = [
   ["con gli a-capo", (text) => text],
@@ -119,6 +161,7 @@ const layouts: Array<[string, (text: string) => string]> = [
 describe.each([
   ["toscano.it", toscano],
   ["tecnocasa.it", tecnocasa],
+  ["idealista.it", idealista],
 ])("%s", (_portal, cases) => {
   describe.each(layouts)("%s", (_layout, layout) => {
     test.each(cases)("%s", (name, url, expected) => {

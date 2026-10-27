@@ -58,6 +58,7 @@ export function readPortalText(text: string, url?: string): PortalRead | null {
   const host = hostOf(url);
   if (/(^|\.)toscano\.it$/.test(host)) return readToscano(compact(text), url);
   if (/(^|\.)tecnocasa\.it$/.test(host)) return readTecnocasa(compact(text));
+  if (/(^|\.)idealista\.it$/.test(host)) return readIdealista(compact(text));
   return null;
 }
 
@@ -217,6 +218,74 @@ function readTecnocasa(flat: string): PortalRead | null {
       city: comma > 0 ? where.slice(0, comma).trim() : undefined,
       province: /\b\d{5}\s+[^()]{2,50}\(([A-Z]{2})\)/.exec(flat)?.[1],
       zone: zone || undefined,
+    }),
+  };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// idealista.it: "Bilocale in vendita in Via Tito Vignoli s.n.c Lorenteggio - Giambellino, Milano Vedi mappa 295.000 € 300.000 € 2%
+// 70 m² 2 locali 1º piano con ascensore", poi "Caratteristiche specifiche 70 m² commerciali 2 locali 1 bagno Buono stato …",
+// "Prezzo dell'immobile: 295.000 €" e "Posizione Via … Quartiere Lorenteggio - Giambellino Zona Lorenteggio - Bande Nere Milano Milano".
+// Il prezzo del riassunto può avere accanto il vecchio prezzo barrato: si legge quello della scheda.
+
+const IDEALISTA_TITLE = /([A-ZÀ-Ù][A-Za-zÀ-ù']+(?:\s+[a-zà-ù']+){0,3})\s+in\s+(vendita|affitto)\s+in\s+(.+?)\s+Vedi mappa/;
+const IDEALISTA_CONDITIONS = /\b(Nuova costruzione|Ottimo stato|Buono stato|Da ristrutturare|Ristrutturato)\b/i;
+
+function idealistaFloor(summary: string): string | undefined {
+  const number = /(\d+)º\s*piano/i.exec(summary)?.[1];
+  if (number) return number;
+  const word = /\bpiano\s+(rialzato|terra|seminterrato)\b/i.exec(summary)?.[1];
+  return word ? word[0].toUpperCase() + word.slice(1).toLowerCase() : undefined;
+}
+
+function readIdealista(flat: string): PortalRead | null {
+  const title = IDEALISTA_TITLE.exec(flat);
+  const priceAt = flat.search(/Prezzo dell.immobile:/i);
+  const price = positive(/Prezzo dell.immobile:\s*([\d.]+(?:,\d{1,2})?)\s*€/i.exec(flat)?.[1]);
+  if (!title || price === null) return null;
+
+  const titleEnd = title.index + title[0].length;
+  const descriptionAt = flat.search(/Descrizione dell.inserzionista/i);
+  const summary = flat.slice(titleEnd, descriptionAt > titleEnd ? descriptionAt : titleEnd + 250);
+
+  const featuresAt = flat.indexOf("Caratteristiche specifiche", titleEnd);
+  const updatedAt = flat.indexOf("Annuncio aggiornato", Math.max(0, featuresAt));
+  const features = featuresAt >= 0 ? flat.slice(featuresAt, updatedAt > featuresAt ? updatedAt : featuresAt + 1500) : "";
+
+  const rooms = positive(/(\d+)\s+local[ei]/i.exec(summary)?.[1]) ?? positive(/(\d+)\s+local[ei]/i.exec(features)?.[1]);
+  const elevator = /\b(con|senza)\s+ascensore/i.exec(summary)?.[1];
+  const conditionLabel = IDEALISTA_CONDITIONS.exec(features)?.[1];
+
+  // L'indirizzo e il quartiere sono attaccati e la virgola separa solo il comune: "Via X, 14 Santa Rita, Torino".
+  const place = title[3].split(",");
+  const city = place.length > 1 ? place[place.length - 1].trim() : "";
+
+  // La sezione Posizione ha le etichette Quartiere e Zona, poi il comune e la provincia: il quartiere è più preciso della zona.
+  const positionAt = priceAt >= 0 ? flat.indexOf("Posizione ", priceAt) : -1;
+  const positionEnd = positionAt >= 0 ? flat.indexOf("Ingrandisci mappa", positionAt) : -1;
+  const position = positionAt >= 0 ? flat.slice(positionAt, positionEnd > positionAt ? positionEnd : positionAt + 300) : "";
+  const beforeCity = city ? `\\s+${escapeRegex(city)}(?:\\s|$)` : "";
+  const district = city ? new RegExp(`Quartiere\\s+(.+?)(?=\\s+Zona\\s|${beforeCity})`).exec(position)?.[1] : undefined;
+  const area = city ? new RegExp(`Zona\\s+(.+?)(?=${beforeCity})`).exec(position)?.[1] : undefined;
+
+  return {
+    narrative: descriptionAt >= 0 ? flat.slice(descriptionAt, updatedAt > descriptionAt ? updatedAt : descriptionAt + 3500) : "",
+    fields: known({
+      contract: title[2].toLowerCase() === "vendita" ? "sale" : "rent",
+      title: `${title[1]} in ${title[2]} in ${title[3]}`,
+      propertyType: title[1].toLowerCase(),
+      price,
+      sqm: positive(/(\d+(?:[.,]\d+)?)\s*m²/i.exec(summary)?.[1]) ?? positive(/(\d+(?:[.,]\d+)?)\s*m²\s+commerciali/i.exec(features)?.[1]),
+      rooms,
+      bedrooms: BEDROOMS_FROM_ROOMS(rooms),
+      bathrooms: positive(/(\d+)\s+bagn[io]/i.exec(features)?.[1]),
+      // Il piano sta nel riassunto: una villa non lo ha, e il suo "1 piano" tra le caratteristiche sono i piani dell'edificio.
+      floor: idealistaFloor(summary) ?? "",
+      condition: conditionLabel ? conditionFromPortalLabel(conditionLabel) : undefined,
+      hasElevator: elevator ? /^con$/i.test(elevator) : undefined,
+      condoMonthly: positive(/Spese condominiali:\s*([\d.]+)\s*€\s*\/\s*mese/i.exec(flat)?.[1]),
+      city: city || undefined,
+      zone: (district ?? area)?.trim() || undefined,
     }),
   };
 }

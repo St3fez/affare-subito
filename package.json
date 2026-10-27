@@ -9,8 +9,6 @@
     "android:debug:apk": "set NODE_ENV=production&& cd android && gradlew.bat app:assembleDebug -x lint -x test --configure-on-demand --build-cache",
     "android:debug:install": "set NODE_ENV=production&& cd android && gradlew.bat app:installDebug -x lint -x test --configure-on-demand --build-cache",
     "android:release:bundle": "set NODE_ENV=production&& cd android && gradlew.bat app:bundleRelease -x lint -x test --configure-on-demand --build-cache",
-    "ios": "expo run:ios",
-    "web": "expo start --web",
     "test": "jest"
   },
   "dependencies": {
@@ -39,8 +37,7 @@
     ],
     "testPathIgnorePatterns": [
       "/node_modules/",
-      "/android/",
-      "/spike/"
+      "/android/"
     ]
   }
 }

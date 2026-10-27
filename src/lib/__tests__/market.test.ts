@@ -1,5 +1,5 @@
 import { lookupMarket, normalizeName } from "../market";
-import type { OmiData, OmiState, OmiZone, Range } from "../types";
+import type { OmiData, OmiState, OmiZone, OmiZoneShapes, Range } from "../types";
 
 const zone = (
   code: string,
@@ -83,6 +83,58 @@ test("senza sigla vale il nome solo se è univoco", () => {
   expect(lookupMarket(omi, { city: "Forlì", province: "", zone: "" })).not.toBeNull();
   expect(lookupMarket(omi, { city: "Samone", province: "", zone: "" })).toBeNull();
   expect(lookupMarket(omi, { city: "Samone", province: "TN", zone: "" })!.sale.normale).toEqual({ min: 1800, max: 2200 });
+});
+
+describe("zona dalla posizione dell'annuncio", () => {
+  const SCALE = 1e5;
+  const square = (lon: number, lat: number, size: number): number[] => {
+    const x = Math.round(lon * SCALE);
+    const y = Math.round(lat * SCALE);
+    const s = Math.round(size * SCALE);
+    return [x, y, s, 0, 0, s, -s, 0]; // (x,y) → est → nord → ovest, a differenze
+  };
+  // Nel comune "0" di prova: Lambrate (C1) sta a ovest, Periferia (D1) a est, e B12 ha un solo punto di riferimento senza valori.
+  const shapes: OmiZoneShapes = {
+    version: 1,
+    comuni: { "0": { C1: [[square(9.2, 45.4, 0.01)]], D1: [[square(9.22, 45.4, 0.01)]], R2: [[square(9.24, 45.4, 0.01)]] } },
+  };
+  const at = (lat: number, lng: number) => ({ city: "Milano", province: "MI", zone: "", point: { lat, lng } });
+
+  test("la zona viene dai confini, anche se il testo non la nomina", () => {
+    const m = lookupMarket(omi, { ...at(45.405, 9.225), zone: "Quartiere inventato" }, shapes)!;
+    expect(m).toMatchObject({ precision: "zona", locatedBy: "position", zoneCodes: ["D1"], sale: { normale: { min: 2000, max: 3000 } } });
+    expect(m.label).toBe("zona Periferia, Milano");
+  });
+
+  test("la posizione vale più del nome: l'annuncio dice Lambrate ma cade in periferia", () => {
+    expect(lookupMarket(omi, { ...at(45.405, 9.225), zone: "Lambrate" }, shapes)).toMatchObject({ zoneCodes: ["D1"], locatedBy: "position" });
+  });
+
+  test("senza posizione, o senza confini del comune, si ripiega sul nome", () => {
+    for (const m of [
+      lookupMarket(omi, { city: "Milano", province: "MI", zone: "Lambrate" }, shapes)!,
+      lookupMarket(omi, { ...at(45.405, 9.225), zone: "Lambrate" }, null)!,
+      lookupMarket(omi, { ...at(45.405, 9.225), zone: "Lambrate" })!,
+    ]) {
+      expect(m.zoneCodes).toEqual(["C1"]);
+      expect(m.locatedBy).toBeUndefined();
+    }
+  });
+
+  test("posizione fuori da ogni zona: si ripiega sul nome o sul comune", () => {
+    const byName = lookupMarket(omi, { ...at(46.0, 10.0), zone: "Lambrate" }, shapes)!;
+    expect(byName.zoneCodes).toEqual(["C1"]);
+    expect(byName.locatedBy).toBeUndefined();
+    const byComune = lookupMarket(omi, at(46.0, 10.0), shapes)!;
+    expect(byComune.precision).toBe("comune");
+    expect(byComune.locatedBy).toBeUndefined();
+  });
+
+  test("zona dei confini che non ha valori di case: si ripiega, senza prendere quelli di una zona vicina", () => {
+    const m = lookupMarket(omi, at(45.405, 9.245), shapes)!;
+    expect(m.locatedBy).toBeUndefined();
+    expect(m.precision).toBe("comune");
+  });
 });
 
 // L'OMI usa le province catastali, precedenti a quelle nuove: Monza sta sotto MI, Forlì è "FO", la Sardegna ha solo CA, SS, NU, OR.

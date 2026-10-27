@@ -65,4 +65,14 @@ export type OmiHistory = {
   zones: Record<string, { sale: (number | null)[]; rent: (number | null)[] }>;
 };
 
+/**
+ * Confini delle zone OMI delle città con più zone, per trovare la zona dalla posizione dell'annuncio.
+ * Per ogni comune (codice ISTAT) e zona: i poligoni, ciascuno fatto di anelli (il primo è il perimetro, gli altri sono buchi).
+ * Ogni anello è una lista piatta di interi in 1e-5 gradi: [lon, lat] del primo punto, poi le differenze dal punto precedente.
+ */
+export type OmiZoneShapes = {
+  version: 1;
+  comuni: Record<string, Record<string, number[][][]>>;
+};
+
 export type Usage = "live" | "longTerm" | "students" | "airbnb";

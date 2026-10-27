@@ -2,9 +2,9 @@ import type { AnalysisSettings } from "./analysis";
 import { acquisitionCosts, type FiscalTable } from "./fiscal";
 import { roundCents } from "./format";
 import { checkListing } from "./listing/check";
-import { lookupMarket, type MarketReference } from "./market";
+import { lookupMarket, pointOf, type MarketReference } from "./market";
 import { monthlyPayment } from "./mortgage";
-import type { Issue, ListingData, OmiData, Range } from "./types";
+import type { Issue, ListingData, OmiData, OmiZoneShapes, Range } from "./types";
 import { buildRentVerdict, omiStateFor, type Verdict } from "./verdict";
 
 export type RentalAnalysis =
@@ -28,7 +28,7 @@ const toThousands = (value: number) => Math.round(value / 1000) * 1000;
 export function analyzeRental(
   listing: ListingData,
   settings: AnalysisSettings,
-  deps: { omi: OmiData; fiscal: FiscalTable }
+  deps: { omi: OmiData; fiscal: FiscalTable; shapes?: OmiZoneShapes | null }
 ): RentalAnalysis {
   if (listing.contract !== "rent") return { kind: "unsupported", reason: "not_a_rent" };
   const { blocking, warnings } = checkListing(listing);
@@ -36,7 +36,7 @@ export function analyzeRental(
 
   const rent = listing.price as number;
   const sqm = listing.sqm as number;
-  const market = lookupMarket(deps.omi, { city: listing.city, province: listing.province, zone: listing.zone });
+  const market = lookupMarket(deps.omi, { city: listing.city, province: listing.province, zone: listing.zone, point: pointOf(listing) }, deps.shapes);
   const verdict = buildRentVerdict({ rent, sqm, condition: listing.condition }, market);
   const fairRent = verdict ? { min: toTens(verdict.reference.min * sqm), max: toTens(verdict.reference.max * sqm) } : null;
 

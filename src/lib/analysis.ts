@@ -2,10 +2,10 @@ import { furnishingCost, renovationCost, renovationLevelFor, type CostTable } fr
 import { acquisitionCosts, type Acquisition, type FiscalTable } from "./fiscal";
 import { roundCents } from "./format";
 import { checkListing } from "./listing/check";
-import { lookupMarket, type MarketReference } from "./market";
+import { lookupMarket, pointOf, type MarketReference } from "./market";
 import { monthlyPayment } from "./mortgage";
 import { DEFAULT_ASSUMPTIONS, evaluateStrategy, type Assumptions, type StrategyResult } from "./strategies";
-import type { Issue, ListingData, OmiData, OmiState, Usage } from "./types";
+import type { Issue, ListingData, OmiData, OmiState, OmiZoneShapes, Usage } from "./types";
 import { buildVerdict, type Verdict } from "./verdict";
 
 export type AnalysisSettings = {
@@ -64,7 +64,7 @@ function marketRentSqm(market: MarketReference | null): number {
 export function analyzeListing(
   listing: ListingData,
   settings: AnalysisSettings,
-  deps: { omi: OmiData; fiscal: FiscalTable; costs: CostTable }
+  deps: { omi: OmiData; fiscal: FiscalTable; costs: CostTable; shapes?: OmiZoneShapes | null }
 ): Analysis {
   // Gli affitti hanno la loro analisi (`analyzeRental`).
   if (listing.contract === "rent") return { kind: "unsupported", reason: "not_a_sale" };
@@ -75,7 +75,7 @@ export function analyzeListing(
   const sqm = listing.sqm as number;
   const bedrooms = listing.bedrooms ?? 0;
 
-  const market = lookupMarket(deps.omi, { city: listing.city, province: listing.province, zone: listing.zone });
+  const market = lookupMarket(deps.omi, { city: listing.city, province: listing.province, zone: listing.zone, point: pointOf(listing) }, deps.shapes);
   const verdict = buildVerdict({ price, sqm, condition: listing.condition }, market);
   // La prima casa (registro al 2%) vale solo se ci si vive: per gli affitti l'imposta è quella da seconda casa.
   const acquisitions = Object.fromEntries(

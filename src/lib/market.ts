@@ -1,9 +1,12 @@
-import type { OmiComune, OmiData, OmiState, OmiZone, Range } from "./types";
+import type { OmiComune, OmiData, OmiState, OmiZone, OmiZoneShapes, Range } from "./types";
+import { locateZone } from "./zoneLocator";
 
 export type MarketReference = {
   /** "zona Lambrate, Milano" oppure "comune di Milano": dice quanta precisione ha il riferimento. */
   label: string;
   precision: "zona" | "comune";
+  /** "position" se la zona è stata trovata dalla posizione dell'annuncio sui confini OMI; assente se viene dal nome. */
+  locatedBy?: "position";
   /** €/mq */
   sale: Partial<Record<OmiState, Range>>;
   /** €/mq al mese */
@@ -93,7 +96,28 @@ function indexFor(omi: OmiData): Map<string, OmiComune[]> {
   return index;
 }
 
-export function lookupMarket(omi: OmiData, query: { city: string; province: string; zone: string }): MarketReference | null {
+/** La posizione dell'annuncio, se le coordinate ci sono. */
+export function pointOf(listing: { lat: number | null; lng: number | null }): { lat: number; lng: number } | null {
+  return listing.lat != null && listing.lng != null ? { lat: listing.lat, lng: listing.lng } : null;
+}
+
+/** "PORTA VIGENTINA, PORTA ROMANA" → "Porta Vigentina, Porta Romana". */
+function readableZone(description: string): string {
+  return description
+    .toLowerCase()
+    .replace(/(^|[\s,.'-])(\p{L})/gu, (_, before: string, letter: string) => before + letter.toUpperCase())
+    .replace(/\s(Di|Del|Della|Dei|Delle|Degli|Dello|E|In|Al|Alla|Da|Con|Per|Sul|Sulla)(?=\s)/g, (m) => m.toLowerCase());
+}
+
+/**
+ * I valori di mercato per un annuncio. Se si conosce la posizione e il comune ha i confini delle zone (`shapes`), la zona è quella
+ * in cui cade il punto; altrimenti, o se quel punto non cade in una zona con valori di case, si cerca per nome.
+ */
+export function lookupMarket(
+  omi: OmiData,
+  query: { city: string; province: string; zone: string; point?: { lat: number; lng: number } | null },
+  shapes?: OmiZoneShapes | null
+): MarketReference | null {
   const cityKey = normalizeName(query.city);
   if (!cityKey) return null;
 
@@ -103,6 +127,21 @@ export function lookupMarket(omi: OmiData, query: { city: string; province: stri
   const matches = province ? candidates.filter((c) => accepted.includes(c.province.toUpperCase())) : candidates;
   if (matches.length !== 1) return null; // assente, oppure ambiguo senza sigla della provincia
   const comune = matches[0];
+
+  const located = query.point && shapes ? locateZone(shapes, comune.istat, query.point.lat, query.point.lng) : null;
+  const locatedZone = located ? comune.zones.find((zone) => zone.code === located.code) : undefined;
+  if (locatedZone) {
+    return {
+      label: `zona ${readableZone(locatedZone.description)}, ${comune.name}`,
+      precision: "zona",
+      locatedBy: "position",
+      sale: combine([locatedZone], "sale"),
+      rent: combine([locatedZone], "rent"),
+      semester: omi.semester,
+      istat: comune.istat,
+      zoneCodes: [locatedZone.code],
+    };
+  }
 
   const scored = comune.zones.map((zone) => ({ zone, score: zoneScore(query.zone, zone.description) }));
   const best = Math.max(0, ...scored.map((s) => s.score));

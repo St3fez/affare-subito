@@ -1,6 +1,7 @@
 import { analyzeListing, DEFAULT_SETTINGS, type Analysis } from "../analysis";
 import type { CostTable } from "../costs";
 import type { FiscalTable, Param } from "../fiscal";
+import { analyzeRental } from "../rent";
 import type { ListingData, OmiData } from "../types";
 
 const param = (value: number): Param<number> => ({ value, source: "test", verifiedAt: null });
@@ -73,6 +74,30 @@ const ok = (l: ListingData, settings = DEFAULT_SETTINGS) => {
 };
 
 const unknownCity = { ...listing, city: "Atlantide", province: "XX" };
+
+describe("zona dalla posizione dell'annuncio", () => {
+  const SCALE = 1e5;
+  // Un quadrato di 0,01° attorno a (9.20, 45.40) è la zona "C1" di Milano per questi dati.
+  const shapes = { version: 1 as const, comuni: { "15146": { C1: [[[Math.round(9.2 * SCALE), Math.round(45.4 * SCALE), 1000, 0, 0, 1000, -1000, 0]]] } } };
+  const withShapes = { ...deps, shapes };
+  const inside = { lat: 45.405, lng: 9.205 };
+
+  test("vendita: l'annuncio senza nome di zona trova la zona dalla posizione", () => {
+    const a = analyzeListing({ ...listing, zone: "", lat: inside.lat, lng: inside.lng }, DEFAULT_SETTINGS, withShapes);
+    expect(a.kind === "ok" && a.market).toMatchObject({ precision: "zona", locatedBy: "position", zoneCodes: ["C1"] });
+    expect(a.kind === "ok" && a.verdict).toMatchObject({ level: "in_linea" });
+  });
+
+  test("senza coordinate o senza confini nulla cambia", () => {
+    expect(analyzeListing({ ...listing, zone: "" }, DEFAULT_SETTINGS, withShapes)).toMatchObject({ market: { precision: "comune" } });
+    expect(analyzeListing({ ...listing, zone: "", lat: inside.lat, lng: inside.lng }, DEFAULT_SETTINGS, deps)).toMatchObject({ market: { precision: "comune" } });
+  });
+
+  test("affitto: stessa cosa", () => {
+    const rent = analyzeRental({ ...listing, contract: "rent", price: 1000, zone: "", lat: inside.lat, lng: inside.lng }, DEFAULT_SETTINGS, withShapes);
+    expect(rent).toMatchObject({ kind: "ok", market: { precision: "zona", locatedBy: "position" } });
+  });
+});
 
 test("analisi completa", () => {
   const a = ok(listing);

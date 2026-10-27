@@ -94,3 +94,72 @@ describe("isBlockedMessage", () => {
     expect(isBlockedMessage("null")).toBe(false);
   });
 });
+
+describe("coordinate dell'annuncio", () => {
+  const withCoords = (coords: unknown, payload: object = {}) => message({ url: "https://milano18.tecnocasa.it/milano/appartamenti-in-vendita-61176236", bodyText: longText, coords, ...payload });
+
+  test("la posizione mandata dalla pagina finisce nell'annuncio", () => {
+    expect(listingFromWebViewMessage(withCoords({ lat: 45.5145, lng: 9.19575 }))).toMatchObject({ lat: 45.5145, lng: 9.19575 });
+  });
+
+  test("senza posizione o con una posizione che non è in Italia, l'annuncio non ha coordinate", () => {
+    for (const coords of [undefined, null, {}, { lat: 45.5 }, { lat: "45.5", lng: "9.1" }, { lat: 0, lng: 0 }, { lat: 48.85, lng: 2.35 }, { lat: 95, lng: 9.1 }, { lat: NaN, lng: 9.1 }]) {
+      expect(listingFromWebViewMessage(withCoords(coords))).toMatchObject({ lat: null, lng: null });
+    }
+  });
+
+  test("i dati strutturati hanno la precedenza sulla posizione della pagina", () => {
+    const listing = listingFromWebViewMessage(message({ url: "https://www.immobiliare.it/annunci/123353645/", nextData, coords: { lat: 41.9, lng: 12.5 } }));
+    expect(listing).toMatchObject({ lat: fixture.props.pageProps.detailData.realEstate.properties[0].location.latitude });
+  });
+});
+
+describe("lo script legge la posizione dalla pagina", () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  const TECNOCASA_SOURCE = `<div class="map"><detail-map :latitude="45.5145" :longitude="9.19575" tecnomaps-endpoint="x"></detail-map></div>`;
+
+  async function run({ host, ldJson = [], source, fetchFails = false }: { host: string; ldJson?: string[]; source?: string; fetchFails?: boolean }) {
+    const posted: any[] = [];
+    const doc = {
+      readyState: "complete",
+      title: "Annuncio",
+      body: { innerText: longText },
+      getElementById: () => null,
+      querySelectorAll: (selector: string) => (selector.includes("ld+json") ? ldJson.map((textContent) => ({ textContent })) : []),
+    };
+    const win = { ReactNativeWebView: { postMessage: (raw: string) => posted.push(JSON.parse(raw)) } };
+    const fetchMock = jest.fn(() => (fetchFails ? Promise.reject(new Error("rete")) : Promise.resolve({ text: () => Promise.resolve(source ?? "") })));
+    new Function("window", "document", "location", "fetch", buildExtractionScript())(win, doc, { href: `https://${host}/annuncio/1`, hostname: host }, fetchMock);
+    await jest.advanceTimersByTimeAsync(20000);
+    return { posted, fetchMock };
+  }
+
+  test("tecnocasa: la posizione sta nel sorgente della pagina, non in quella già composta, e si rilegge il sorgente", async () => {
+    const { posted, fetchMock } = await run({ host: "milano18.tecnocasa.it", source: TECNOCASA_SOURCE });
+    expect(fetchMock).toHaveBeenCalledWith("https://milano18.tecnocasa.it/annuncio/1", expect.objectContaining({ credentials: "same-origin" }));
+    expect(posted).toHaveLength(1);
+    expect(posted[0].coords).toEqual({ lat: 45.5145, lng: 9.19575 });
+  });
+
+  test("tecnocasa: se il sorgente non si riesce a leggere il messaggio parte lo stesso, senza posizione", async () => {
+    const { posted } = await run({ host: "www.tecnocasa.it", fetchFails: true });
+    expect(posted).toHaveLength(1);
+    expect(posted[0].coords).toBeNull();
+    expect(posted[0].bodyText).toContain("Trilocale");
+  });
+
+  test("dati strutturati della pagina con la posizione (schema.org): si leggono senza altre richieste", async () => {
+    const geo = JSON.stringify({ "@type": "Apartment", geo: { "@type": "GeoCoordinates", latitude: 45.4642, longitude: 9.19 } });
+    const { posted, fetchMock } = await run({ host: "www.altro.it", ldJson: [geo] });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(posted[0].coords).toEqual({ lat: 45.4642, lng: 9.19 });
+  });
+
+  test("un altro portale senza posizione non fa nessuna richiesta in più", async () => {
+    const { posted, fetchMock } = await run({ host: "www.altro.it" });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(posted[0].coords).toBeNull();
+  });
+});

@@ -164,7 +164,7 @@ export function InputScreen({
             autoCapitalize="none"
           />
           <Button label="Analizza" onPress={() => start(url)} disabled={phase === "loading" || url.trim().length === 0} />
-          <Text style={styles.muted}>Funziona meglio con immobiliare.it. Con gli altri portali può servire incollare il testo.</Text>
+          <Text style={styles.muted}>Funziona bene con immobiliare.it, idealista.it, tecnocasa.it e toscano.it. Con gli altri portali può servire incollare il testo.</Text>
         </Card>
       )}
 

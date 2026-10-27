@@ -37,8 +37,8 @@ export function PaywallScreen({
     >
       <Card>
         <Text style={styles.price}>{shownPrice}</Text>
-        {/* Task 19: quando il prodotto su Play è definito (prepagato o a rinnovo), qui va detto se si rinnova. */}
-        <Text style={styles.body}>Valido 12 mesi.</Text>
+        {/* Il prodotto su Play è un piano prepagato di 12 mesi (vedi assets/store/play-console.md): non si rinnova da solo. */}
+        <Text style={styles.body}>Si paga una volta e vale 12 mesi: non si rinnova da solo.</Text>
         <Text style={styles.item}>Analisi senza limiti per un anno.</Text>
         <Text style={styles.item}>Le analisi già fatte restano sempre consultabili, anche senza contributo.</Text>
         <Text style={styles.item}>Il pagamento passa da Google Play: non serve un account.</Text>

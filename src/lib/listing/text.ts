@@ -1,11 +1,14 @@
 import { parseFlexibleNumber, toNumber } from "../format";
 import { stableHash } from "./hash";
+import { readPortalText } from "./portals";
 import type { Condition, ListingData } from "../types";
 
 type MoneyCandidate = {
   value: number;
   index: number;
   context: string;
+  /** Lunghezza del testo dell'importo, per ritagliare il testo subito prima e dopo. */
+  length: number;
 };
 
 const PROPERTY_TYPES = [
@@ -87,13 +90,21 @@ function titleCase(value: string): string {
     .join(" ");
 }
 
-function parseCondition(text: string): Condition | null {
+// "Necessita di ristrutturazione completa", "serve una ristrutturazione": il lavoro è ancora da fare.
+const NEEDS_RENOVATION = /\b(?:necessit\w*|richied\w*|bisogn\w*|serv\w*|da)\s+(?:di\s+|una\s+|un\s+)?(?:completa\s+|totale\s+|integrale\s+)?ristrutturazion/;
+
+function parseCondition(rawText: string): Condition | null {
+  // "Anno di ristrutturazione interna: 1980" dice che la casa è già stata ristrutturata, non che serve farlo; e "cucina (non)
+  // abitabile" descrive la cucina, non lo stato della casa.
+  const text = rawText
+    .replace(/anno\s+di\s+ristrutturazione(?:\s+(?:interna|esterna))?\s*:?\s*(?:\d{4})?/gi, " ")
+    .replace(/cucin\w*\s+(?:non\s+)?abitabil\w*/gi, " ");
   const t = normalizeText(text);
   const spoken = normalizeSpeechPhrase(text);
   if (
     t.includes("da ristrutturare") ||
     spoken.includes("da ristrutturare") ||
-    spoken.includes("ristrutturazione") ||
+    NEEDS_RENOVATION.test(spoken) ||
     spoken.includes("ristrutturare") ||
     spoken.includes("da rifare") ||
     t.includes("completamente da rifare") ||
@@ -168,7 +179,7 @@ function extractMoneyCandidates(text: string): MoneyCandidate[] {
       else if (/k|mila/i.test(raw)) value *= 1000;
 
       if (value >= 100 && value <= 50000000) {
-        output.push({ value: Math.round(value), index, context });
+        output.push({ value: Math.round(value), index, context, length: raw.length });
       }
 
       match = regex.exec(text);
@@ -223,6 +234,59 @@ function pickFallbackMoneyCandidate(candidates: MoneyCandidate[], minValue: numb
   return [...filtered].sort((a, b) => b.value - a.value)[0]?.value ?? null;
 }
 
+const RENT_POSITIVE = ["canone", "affitto", "locazione", "mese", "mensil"];
+const RENT_NEGATIVE = ["cauzione", "deposito", "caparra", "spese", "condomin", "mutuo", "rata", "vendita", "agenzia", "provvigion", "altri", "simil"];
+const PER_SQM = /(?:\/|al|per)\s*(?:mq|m²|m2|metro)/;
+const MIN_RENT = 100;
+const MAX_RENT = 30000;
+
+/**
+ * Il canone mensile di un affitto: l'importo con "canone", "affitto" o "al mese" attorno e senza cauzione, spese o rate.
+ * Si guarda il testo subito prima (dove stanno le etichette) e dopo l'importo, non la riga: va bene anche se la pagina non
+ * va a capo. Senza un candidato chiaro non si indovina: meglio chiedere il canone che usarne uno sbagliato.
+ */
+function pickRentPrice(text: string, candidates: MoneyCandidate[]): number | null {
+  const lower = text.toLowerCase();
+  let best: { value: number; score: number; index: number } | null = null;
+
+  for (const candidate of candidates) {
+    if (candidate.value < MIN_RENT || candidate.value > MAX_RENT) continue;
+    const window = lower.slice(Math.max(0, candidate.index - 40), candidate.index + candidate.length + 14);
+    let score = 0;
+    for (const word of RENT_POSITIVE) if (window.includes(word)) score += 3;
+    for (const word of RENT_NEGATIVE) if (window.includes(word)) score -= 4;
+    if (PER_SQM.test(window)) score -= 4;
+    if (score <= 0) continue;
+    if (!best || score > best.score || (score === best.score && candidate.index < best.index)) {
+      best = { value: candidate.value, score, index: candidate.index };
+    }
+  }
+  return best ? best.value : null;
+}
+
+/**
+ * Le spese condominiali al mese. Le cifre annue si dividono per 12; "senza spese condominiali" e le cifre senza unità sopra
+ * 800 € (mese o anno?) non danno nulla: meglio non indovinare.
+ */
+function extractCondoMonthly(rawText: string): number | null {
+  const text = rawText.replace(/\bc\.\s?a\b\.?/gi, "ca");
+  const pattern = /spese(?:\s+(?:di\s+)?(?:condominiali|condominio))?([^\d\n.;]{0,60}?)(\d{1,3}(?:[.\s]\d{3})+|\d+)(?:,\d{1,2})?\s*(?:€|euro|eur)?\s*(\/\s*mese|al\s+mese|mensili|mensile|\/\s*anno|annue|annuali|annuo|all['’]anno|l['’]anno)?/gi;
+  let match: RegExpExecArray | null = pattern.exec(text);
+  while (match) {
+    const label = text.slice(Math.max(0, match.index - 25), match.index + 5).toLowerCase();
+    const condo = /condomin/i.test(match[0]);
+    const unit = (match[3] || "").toLowerCase();
+    const value = parseFlexibleNumber(match[2]);
+    if (!/senza|non\s+indicat/.test(label) && Number.isFinite(value) && (condo || unit)) {
+      const annual = /anno|annu/.test(unit);
+      const monthly = annual ? value / 12 : unit || value <= 800 ? value : NaN;
+      if (monthly >= 5 && monthly <= 2000) return Math.round(monthly);
+    }
+    match = pattern.exec(text);
+  }
+  return null;
+}
+
 function extractTopStandalonePrice(text: string): number | null {
   const lines = text
     .split(/\n+/)
@@ -268,7 +332,9 @@ function pushSqmCandidate(output: Array<{ value: number; score: number }>, rawVa
   output.push({ value, score: getSqmContextScore(line) + scoreBonus });
 }
 
-function extractSqm(text: string): number | null {
+function extractSqm(rawText: string): number | null {
+  // "Mezzi di superficie: autobus 84, 95" sono i trasporti pubblici, non i metri quadri.
+  const text = rawText.replace(/mezzi\s+di\s+superficie/gi, " ");
   const lines = text
     .split(/\n+/)
     .map((line) => line.trim())
@@ -756,30 +822,45 @@ export function inferContract(text: string, url?: string): ListingData["contract
   return "unknown";
 }
 
+const roundOrNull = (value: number | null) => (value === null ? null : Math.round(value));
+
+/**
+ * Il testo di una pagina di annuncio (o incollato dall'utente) → l'annuncio. I portali che conosciamo (`portals.ts`) si leggono
+ * per etichetta; per tutto il resto, e per ciò che il lettore del portale non trova, vale il lettore generico.
+ */
 export function parseListingText(text: string, url?: string): ListingData {
+  const portal = readPortalText(text, url);
+  const found = portal?.fields ?? {};
+  // Di un portale che conosciamo, le voci sulla casa si cercano nella sua descrizione e nella sua scheda: nel resto della
+  // pagina ci sono menu, zone e altri annunci con altri prezzi.
+  const body = portal ? portal.narrative : text;
+
   const candidates = extractMoneyCandidates(text);
+  const contract = found.contract ?? inferContract(text, url);
   const price =
-    pickMoneyCandidate(
-      candidates,
-      ["prezzo", "richiesta", "richiesto", "vendita", "costo", "trattabile"],
-      ["affitto", "canone", "mese", "mensile", "locato", "rendita", "rivendita", "uscita", "rata", "mutuo"],
-      10000,
-      20000000
-    ) ??
-    pickFallbackMoneyCandidate(candidates, 10000, 20000000) ??
-    extractTopStandalonePrice(text);
+    found.price ??
+    (contract === "rent"
+      ? pickRentPrice(text, candidates)
+      : pickMoneyCandidate(
+          candidates,
+          ["prezzo", "richiesta", "richiesto", "vendita", "costo", "trattabile"],
+          ["affitto", "canone", "mese", "mensile", "locato", "rendita", "rivendita", "uscita", "rata", "mutuo"],
+          10000,
+          20000000
+        ) ??
+        pickFallbackMoneyCandidate(candidates, 10000, 20000000) ??
+        extractTopStandalonePrice(text));
   const { city, zone } = extractCityZone(text);
-  const bedrooms = extractBedrooms(text);
-  const bathrooms = extractBathrooms(text);
   const normalized = normalizeText(text);
+  const normalizedBody = normalizeText(body);
 
   let hasElevator: boolean | null = null;
-  if (normalized.includes("senza ascensore") || normalized.includes("no ascensore")) {
+  if (normalizedBody.includes("senza ascensore") || normalizedBody.includes("no ascensore")) {
     hasElevator = false;
   } else if (
-    normalized.includes("con ascensore") ||
-    normalized.includes("dotato di ascensore") ||
-    normalized.includes("ascensorato")
+    normalizedBody.includes("con ascensore") ||
+    normalizedBody.includes("dotato di ascensore") ||
+    normalizedBody.includes("ascensorato")
   ) {
     hasElevator = true;
   }
@@ -788,23 +869,24 @@ export function parseListingText(text: string, url?: string): ListingData {
     source: "text",
     url,
     listingKey: `text:${stableHash(normalized)}`,
-    contract: inferContract(text, url),
-    title: extractTitle(text),
-    propertyType: extractType(text).toLowerCase(),
+    contract,
+    title: found.title ?? extractTitle(text),
+    propertyType: found.propertyType ?? extractType(text).toLowerCase(),
     price: price || null,
-    sqm: extractSqm(text) || null,
-    rooms: null,
-    bedrooms: bedrooms === null ? null : Math.round(bedrooms),
-    bathrooms: bathrooms === null ? null : Math.round(bathrooms),
-    floor: extractFloor(text),
-    condition: parseCondition(text),
-    hasElevator,
-    hasGarage: extractGarageFeature(text),
-    condoMonthly: null,
-    energyClass: "",
-    city,
-    province: extractProvince(text),
-    zone,
+    sqm: found.sqm ?? (extractSqm(text) || null),
+    rooms: found.rooms ?? null,
+    bedrooms: found.bedrooms ?? roundOrNull(extractBedrooms(body)),
+    bathrooms: found.bathrooms ?? roundOrNull(extractBathrooms(body)),
+    floor: found.floor ?? extractFloor(body),
+    condition: found.condition ?? parseCondition(body),
+    hasElevator: found.hasElevator ?? hasElevator,
+    hasGarage: extractGarageFeature(body),
+    condoMonthly: found.condoMonthly ?? extractCondoMonthly(body),
+    energyClass: found.energyClass ?? "",
+    city: found.city ?? city,
+    province: found.province ?? extractProvince(text),
+    // Un portale che conosciamo e non indica il quartiere non ne ha: dal resto della pagina uscirebbero voci dei menu.
+    zone: portal ? (found.zone ?? "") : zone,
     lat: null,
     lng: null,
   };

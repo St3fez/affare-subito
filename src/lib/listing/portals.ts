@@ -30,7 +30,15 @@ function known(fields: Partial<ListingData>): Partial<ListingData> {
 
 const BEDROOMS_FROM_ROOMS = (rooms: number | null) => (rooms === null ? undefined : Math.max(0, rooms - 1));
 
-const PROPERTY_WORDS = ["appartamento", "attico", "loft", "villa", "villetta", "rustico", "casale", "mansarda", "monolocale", "bilocale", "trilocale", "quadrilocale"];
+// Le parole con cui i portali dicono che cos'è: case, ma anche uffici, negozi e simili, perché l'app deve saperlo e dire "non è una casa".
+const TYPE_HEADS = [
+  "appartamento", "attico", "loft", "villa", "villetta", "rustico", "casale", "mansarda", "monolocale", "bilocale", "trilocale",
+  "quadrilocale", "pentalocale", "plurilocale", "casa", "terratetto", "palazzo", "stabile", "bifamiliare", "trifamiliare",
+  "ufficio", "negozio", "box", "garage", "autorimessa", "magazzino", "capannone", "laboratorio", "terreno", "locale", "posto", "albergo",
+];
+const TYPE_CONNECTORS = ["di", "a", "in", "da", "e", "con", "auto", "schiera", "commerciale", "agricolo", "edificabile", "porzione", "di"];
+const TYPE_WORDS = new Set([...TYPE_HEADS, ...TYPE_CONNECTORS]);
+const SLUG_TYPES = new Set(TYPE_HEADS.filter((word) => word !== "casa"));
 
 /** Il valore dopo un'etichetta, fino alla prossima etichetta nota o alla fine. */
 function valueAfter(region: string, label: string, labels: string[], suffix = ""): string | null {
@@ -57,7 +65,7 @@ export function readPortalText(text: string, url?: string): PortalRead | null {
 // toscano.it: "Casa in vendita - Via Rogoredo, Milano (rif. 23/2026) 73 m² 3 Locali 1 Bagni Piano 4 Prezzo immobile € 229.000"
 // e, più sotto, "Caratteristiche Superficie 73m² Locali 3 … Condizioni immobile Buono / Abitabile Spese condominio 250 €/mese".
 
-const TOSCANO_TITLE = /\b([A-ZÀ-Ù][A-Za-zÀ-ù']+)\s+in\s+(vendita|affitto)\s+-\s+([^()]+?)\s*\(rif\.\s*[^)]*\)/;
+const TOSCANO_TITLE = /\b([A-ZÀ-Ù][A-Za-zÀ-ù']+(?:\s+[a-zà-ù']+){0,2})\s+in\s+(vendita|affitto)\s+-\s+([^()]+?)\s*\(rif\.\s*[^)]*\)/;
 const TOSCANO_LABELS = [
   "Caratteristiche",
   "Superficie",
@@ -97,7 +105,7 @@ function readToscano(flat: string, url: string): PortalRead | null {
   const place = title ? title[3].split(",") : [];
   const word = title ? title[1].toLowerCase() : "";
   const slug = /\/\d+-([a-z]+)(?:-|$)/.exec(url.replace(/^https?:\/\/[^/]*/i, ""))?.[1] ?? "";
-  const propertyType = PROPERTY_WORDS.includes(word) ? word : PROPERTY_WORDS.includes(slug) ? slug : undefined;
+  const propertyType = word && word !== "casa" ? word : SLUG_TYPES.has(slug) ? slug : undefined;
 
   const descriptionEnd = Math.min(...[tableAt, flat.indexOf("Il presente annuncio", Math.max(0, descriptionAt))].filter((index) => index > descriptionAt));
   const narrative = descriptionAt >= 0 ? flat.slice(descriptionAt, Number.isFinite(descriptionEnd) ? descriptionEnd : descriptionAt + 3000) : "";
@@ -127,12 +135,31 @@ function readToscano(flat: string, url: string): PortalRead | null {
 // tecnocasa.it (siti delle agenzie, *.tecnocasa.it): "Trilocale in vendita Pontedera, Via Tosco Romagnola est - Fuori Dal Ponte
 // € 95.000 3 locali 90 Mq 1 bagno" e la scheda "Piano: 1 di 3 Camere da letto: 2 Ascensore: No … Spese annue € 0".
 
-const TECNOCASA_TYPES =
-  "Monolocale|Bilocale|Trilocale|Quadrilocale|Pentalocale|Plurilocale|Appartamento|Attico|Mansarda|Loft|Villetta a schiera|Villetta|Villa|Rustico|Casale|Casa|Terratetto|Porzione di casa";
-const TECNOCASA_SUMMARY = new RegExp(
-  `\\b(${TECNOCASA_TYPES})\\s+in\\s+(vendita|affitto)\\s+([^€]{3,140}?)\\s*€\\s*([\\d.]+)(?:,\\d{1,2})?(?:\\s*\\/\\s*mese)?`,
-  "i"
-);
+const SUMMARY_AFTER_TYPE = /^([^€,]{2,60},[^€]{1,100}?)\s*€\s*([\d.]+)(?:,\d{1,2})?(?:\s*\/\s*mese)?/;
+
+/**
+ * "Porzione di bifamiliare in vendita Trecase, Via Casa Cirillo € 395.000": si parte da "in vendita/affitto" e si guarda indietro
+ * finché le parole sono quelle di un tipo di immobile (così non si inglobano le parole del menu), poi in avanti per
+ * "comune, via € prezzo". Il menu ("Immobili in vendita") non ha né un tipo né un prezzo e viene saltato.
+ */
+function findTecnocasaSummary(flat: string): { type: string; word: string; where: string; price: string; end: number } | null {
+  const anchor = /\s+in\s+(vendita|affitto)\s+/gi;
+  let match: RegExpExecArray | null = anchor.exec(flat);
+  while (match) {
+    const before = flat.slice(Math.max(0, match.index - 60), match.index).split(/\s+/).filter(Boolean);
+    const words: string[] = [];
+    for (let i = before.length - 1; i >= 0 && words.length < 4; i--) {
+      if (!TYPE_WORDS.has(before[i].toLowerCase())) break;
+      words.unshift(before[i]);
+    }
+    while (words.length > 0 && !TYPE_HEADS.includes(words[0].toLowerCase()) && words[0].toLowerCase() !== "porzione") words.shift();
+    const start = match.index + match[0].length;
+    const rest = words.length > 0 ? SUMMARY_AFTER_TYPE.exec(flat.slice(start, start + 220)) : null;
+    if (rest) return { type: words.join(" "), word: match[1].toLowerCase(), where: rest[1].trim(), price: rest[2], end: start + rest[0].length };
+    match = anchor.exec(flat);
+  }
+  return null;
+}
 
 /** "Piano: 1 di 3 (Piano basso)" → "1"; "Rialzato di 5" → "Rialzato". */
 function tecnocasaFloor(value: string): string {
@@ -146,14 +173,14 @@ function tecnocasaFeature(features: string, label: string): string | null {
 }
 
 function readTecnocasa(flat: string): PortalRead | null {
-  const summary = TECNOCASA_SUMMARY.exec(flat);
+  const summary = findTecnocasaSummary(flat);
   if (!summary) return null;
 
-  const after = flat.slice(summary.index + summary[0].length, summary.index + summary[0].length + 120);
+  const after = flat.slice(summary.end, summary.end + 120);
   const rooms = positive(/(\d+)\s+local[ei]/i.exec(after)?.[1]);
 
   // "Pontedera, Via Tosco Romagnola est - Fuori Dal Ponte": il comune prima della virgola, il quartiere dopo l'ultimo " - ".
-  const where = summary[3].trim();
+  const where = summary.where;
   const comma = where.indexOf(",");
   const rest = comma >= 0 ? where.slice(comma + 1) : "";
   const zone = rest.includes(" - ") ? rest.slice(rest.lastIndexOf(" - ") + 3).trim() : "";
@@ -172,14 +199,13 @@ function readTecnocasa(flat: string): PortalRead | null {
   );
   const description = descriptionAt >= 0 ? flat.slice(descriptionAt, Number.isFinite(descriptionEnd) ? descriptionEnd : descriptionAt + 3000) : "";
 
-  const word = summary[2].toLowerCase();
   return {
     narrative: `${description} ${features}`.trim(),
     fields: known({
-      contract: word === "vendita" ? "sale" : "rent",
-      title: `${summary[1]} in ${word} - ${where}`,
-      propertyType: summary[1].toLowerCase(),
-      price: positive(summary[4]),
+      contract: summary.word === "vendita" ? "sale" : "rent",
+      title: `${summary.type} in ${summary.word} - ${where}`,
+      propertyType: summary.type.toLowerCase(),
+      price: positive(summary.price),
       sqm: positive(/(\d+(?:[.,]\d+)?)\s*Mq/i.exec(after)?.[1]),
       rooms,
       bedrooms: bedrooms ?? BEDROOMS_FROM_ROOMS(rooms),

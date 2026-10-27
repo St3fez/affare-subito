@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 
+import { checkListing } from "../check";
 import { readPortalText } from "../portals";
 import { parseListingText } from "../text";
 
@@ -95,6 +96,18 @@ const tecnocasa: Array<[string, string, Expected]> = [
     "https://milano18.tecnocasa.it/milano/appartamenti-in-affitto-61178850",
     { contract: "rent", price: 740, sqm: 30, rooms: 1, bedrooms: 1, bathrooms: 1, floor: "1", propertyType: "monolocale", city: "Milano", province: "MI", zone: "Niguarda", condition: "pronto", condoMonthly: 80, hasElevator: false },
   ],
+  [
+    // Il tipo può essere più lungo di una parola.
+    "tecnocasa-bifamiliare-trecase",
+    "https://torreannunziata1.tecnocasa.it/trecase/ville-in-vendita-61233432",
+    { contract: "sale", price: 395000, sqm: 100, rooms: 4, bathrooms: 2, propertyType: "porzione di bifamiliare", city: "Trecase", province: "NA", zone: "" },
+  ],
+  [
+    // Uffici e negozi: il tipo si legge lo stesso, così l'app dice che non è una casa.
+    "tecnocasa-office-bologna",
+    "https://bologna6.tecnocasa.it/bologna/ufficio-in-affitto-61198384",
+    { contract: "rent", price: 1400, sqm: 90, rooms: 4, bathrooms: 1, propertyType: "ufficio", city: "Bologna", province: "BO" },
+  ],
 ];
 
 // La pagina vera può andare a capo in modo diverso dalla mia ricostruzione: i due formati devono dare lo stesso risultato.
@@ -129,6 +142,16 @@ describe("portali non riconosciuti o pagine diverse dal previsto", () => {
   test("le pagine in inglese di toscano non fanno danni", () => {
     const english = "House for sale - Via Rogoredo, Milano (ref. 23/2026)\n73 m²\n3 Rooms\nProperty price\n€ 229,000";
     expect(() => parseListingText(english, "https://en.toscano.it/comune-milano/1198347-appartamento-via-rogoredo")).not.toThrow();
+  });
+
+  test("un ufficio o un negozio non è una casa, su entrambi i portali", () => {
+    const office = parseListingText(fixture("tecnocasa-office-bologna"), "https://bologna6.tecnocasa.it/bologna/ufficio-in-affitto-61198384");
+    expect(checkListing(office).blocking).toContain("not_residential");
+
+    const shop = "Negozio in vendita - Via Torino, Milano (rif. 3/2026)\n40 m²\n1 Locali\n1 Bagni\nPiano Terra\nPrezzo immobile\n€ 150.000\nDescrizione\nOttima visibilità.";
+    const listing = parseListingText(shop, "https://www.toscano.it/comune-milano/1234567-negozio-via-torino");
+    expect(listing).toMatchObject({ propertyType: "negozio", price: 150000, sqm: 40, city: "Milano" });
+    expect(checkListing(listing).blocking).toContain("not_residential");
   });
 
   test("l'indirizzo dell'annuncio di tecnocasa decide anche il contratto", () => {

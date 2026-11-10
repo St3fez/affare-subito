@@ -53,23 +53,23 @@ dell'informativa (`docs/index.html`): oggi dicono che non si rinnova.
 **Descrizione breve** (80 caratteri al massimo):
 
 ```
-Incolla il link di un annuncio e scopri se il prezzo o l'affitto è giusto.
+Condividi un annuncio e scopri se il prezzo o l'affitto è giusto.
 ```
 
 **Descrizione completa** (4.000 caratteri al massimo):
 
 ```
-Stai per comprare o affittare casa e non sai se il prezzo è giusto? Incolla il link dell'annuncio: Affare Subito lo legge e lo confronta con i valori di mercato della zona.
+Stai per comprare o affittare casa e non sai se il prezzo è giusto? Dall'annuncio tocca Condividi e scegli Affare Subito (oppure incolla il link): l'app lo legge e lo confronta con i valori di mercato della zona.
 
 COSA TI DICE
 • Se il prezzo è sotto, in linea o sopra il mercato, con la fascia di prezzo della zona e il modo in cui i valori sono cambiati negli ultimi anni.
 • Per gli affitti: se il canone è giusto, e quanto costerebbe invece comprare una casa simile (anticipo, imposte e rata del mutuo).
-• Quanto costa davvero entrare in una casa che compri: imposte, notaio, agenzia, lavori e arredo. Ogni cifra stimata è segnata come stima.
+• Quanto costa davvero entrare in una casa che compri: imposte, notaio, agenzia, spese del mutuo (imposta sostitutiva, notaio, banca), lavori e arredo. Ogni cifra stimata è segnata come stima.
 • Come potrebbe rendere la casa in quattro modi: viverci, affitto a lungo termine, stanze a studenti, affitto breve. Entrate, spese, tasse e resa netta, con ipotesi che puoi modificare.
 • Un archivio delle analisi e il confronto tra due case.
 
 COME FUNZIONA
-Incolli il link, l'app apre la pagina come farebbe il tuo browser e legge prezzo, metri quadri e comune. Controlli i dati, correggi quello che non torna e ottieni il risultato. Se un sito non si lascia leggere puoi incollare il testo dell'annuncio o inserire i dati a mano.
+Apri l'annuncio sul sito o nell'app del portale, tocca Condividi e scegli Affare Subito (o incolla il link). L'app apre la pagina come farebbe il tuo browser e legge prezzo, metri quadri, comune e il resto dei dati. Controlli i dati, correggi quello che non torna e ottieni il risultato. Funziona bene con immobiliare.it, casa.it, idealista.it, tecnocasa.it, toscano.it e remax.it. Se un sito non si lascia leggere puoi incollare il testo dell'annuncio o inserire i dati a mano.
 In molte grandi città la zona si trova dalla posizione dell'annuncio, e il confronto è con i valori di quella zona e non con la media di tutta la città.
 
 QUANTO COSTA
@@ -85,7 +85,7 @@ I valori di mercato vengono dalle quotazioni dell'Osservatorio del Mercato Immob
 **Novità di questa versione:**
 
 ```
-Prima versione di Affare Subito: verdetto sul prezzo, costo per entrare, affitti, quattro usi della casa, archivio e confronto.
+Prima versione di Affare Subito: condividi l'annuncio dal portale e ottieni il verdetto sul prezzo, il costo per entrare, gli affitti, quattro usi della casa, l'archivio e il confronto.
 ```
 
 **Categoria:** Casa e arredamento (House & Home). **Tag:** immobili, mutuo, affitto. **Indirizzo e-mail di contatto:** il tuo (è pubblico nella scheda).

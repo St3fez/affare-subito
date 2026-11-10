@@ -77,14 +77,14 @@ export function analyzeListing(
 
   const market = lookupMarket(deps.omi, { city: listing.city, province: listing.province, zone: listing.zone, point: pointOf(listing) }, deps.shapes);
   const verdict = buildVerdict({ price, sqm, condition: listing.condition }, market);
-  // La prima casa (registro al 2%) vale solo se ci si vive: per gli affitti l'imposta è quella da seconda casa.
+  const principal = price * (1 - settings.downPaymentPct / 100);
+  // La prima casa (registro al 2%, imposta sostitutiva sul mutuo allo 0,25%) vale solo se ci si vive: per gli affitti le imposte sono quelle da seconda casa.
   const acquisitions = Object.fromEntries(
-    USAGES.map((usage) => [usage, acquisitionCosts({ price, firstHome: settings.firstHome && usage === "live" }, deps.fiscal)])
+    USAGES.map((usage) => [usage, acquisitionCosts({ price, firstHome: settings.firstHome && usage === "live", loan: principal }, deps.fiscal)])
   ) as Record<Usage, Acquisition>;
   const acquisition = acquisitions.live;
   const renovation = settings.renovationOverride ?? renovationCost(sqm, renovationLevelFor(listing.condition), deps.costs);
 
-  const principal = price * (1 - settings.downPaymentPct / 100);
   const mortgageMonthly = roundCents(monthlyPayment(principal, settings.ratePct, settings.years));
 
   const rentSqm = settings.manualRentSqm != null && settings.manualRentSqm > 0 ? settings.manualRentSqm : marketRentSqm(market);

@@ -1,0 +1,87 @@
+{
+  "sale": {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    "@id": "https://progress.remax.it/vendita-appartamento/brescia/panoramica-porta-venezia-45401001-118#listing",
+    "inLanguage": "it",
+    "url": "https://progress.remax.it/vendita-appartamento/brescia/panoramica-porta-venezia-45401001-118",
+    "name": "Appartamento in vendita a Brescia, Brescia est",
+    "description": "Elegante e signorile appartamento pentalocale con ripostiglio/lavanderia, doppi servizi e garage doppio in larghezza. Atrio di ingresso, sala da pranzo, cucina con balcone, soggiorno, salotto, disimpegno nella zona notte, 2 camere da letto con balcone, 2 bagni con finestra. Viste aperte sulla Panoramica e libero su 3 lati. Condominio molto signorile ben abitato e ben frequentato.",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Via Daniele Comboni 24",
+      "addressLocality": "Brescia",
+      "addressRegion": "Brescia",
+      "postalCode": "25123",
+      "addressCountry": "IT"
+    },
+    "geo": { "@type": "GeoCoordinates", "latitude": "45.53145140", "longitude": "10.23704970" },
+    "floorSize": { "@type": "QuantitativeValue", "value": 160, "unitCode": "MTK" },
+    "numberOfRooms": "5",
+    "numberOfBedrooms": "4",
+    "numberOfBathroomsTotal": "2",
+    "numberOfFloorsInBuilding": "4",
+    "yearBuilt": "1965",
+    "amenityFeature": [
+      { "@type": "LocationFeatureSpecification", "name": "Ascensore", "value": true },
+      { "@type": "LocationFeatureSpecification", "name": "Balcone", "value": true },
+      { "@type": "LocationFeatureSpecification", "name": "Box auto", "value": true },
+      { "@type": "LocationFeatureSpecification", "name": "Animali ammessi", "value": true },
+      { "@type": "LocationFeatureSpecification", "name": "Disponibilità immediata", "value": true }
+    ],
+    "additionalProperty": [
+      { "@type": "PropertyValue", "name": "Classe energetica", "value": "A2" },
+      { "@type": "PropertyValue", "name": "Stato di conservazione", "value": "buono" },
+      { "@type": "PropertyValue", "name": "Riscaldamento", "value": "centralizzato" },
+      { "@type": "PropertyValue", "name": "Cucina", "value": "abitabile" }
+    ],
+    "datePosted": "2026-03-03T00:00:00.000Z",
+    "offers": {
+      "@type": "Offer",
+      "price": 290000,
+      "priceCurrency": "EUR",
+      "availability": "https://schema.org/InStock",
+      "businessFunction": "https://schema.org/Sell"
+    }
+  },
+  "rent": {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    "url": "https://home-district.remax.it/affitto-appartamento/brescia/centro-storico-31971013-468",
+    "name": "Appartamento in affitto a Brescia, Zona Ring Sud/Ovest",
+    "description": "RIF: PA-013-468 Brescia centro, zona Ring , proponiamo in affitto trilocale arredato posizionato al piano primo, in via dei Mille, in un palazzo storico L'appartamento &#232; cos&#236; composto: ampio soggiorno, cucina abitabile, disimpegno, due camere matrimoniali e bagno finestrato con doccia e vasca. L'appartamento &#232; completamento arredato compresi gli elettrodomestici",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Via Dei Mille 8",
+      "addressLocality": "Brescia",
+      "addressRegion": "Brescia",
+      "postalCode": "25122",
+      "addressCountry": "IT"
+    },
+    "geo": { "@type": "GeoCoordinates", "latitude": "45.54106850", "longitude": "10.21181600" },
+    "floorSize": { "@type": "QuantitativeValue", "value": 85, "unitCode": "MTK" },
+    "numberOfRooms": "3",
+    "numberOfBedrooms": "2",
+    "numberOfBathroomsTotal": "1",
+    "amenityFeature": [
+      { "@type": "LocationFeatureSpecification", "name": "Balcone", "value": true },
+      { "@type": "LocationFeatureSpecification", "name": "Terrazzo", "value": true },
+      { "@type": "LocationFeatureSpecification", "name": "Giardino", "value": true },
+      { "@type": "LocationFeatureSpecification", "name": "Box auto", "value": true },
+      { "@type": "LocationFeatureSpecification", "name": "Accessibile", "value": true }
+    ],
+    "additionalProperty": [
+      { "@type": "PropertyValue", "name": "Classe energetica", "value": "G" },
+      { "@type": "PropertyValue", "name": "Stato di conservazione", "value": "buono" },
+      { "@type": "PropertyValue", "name": "Riscaldamento", "value": "autonomo" },
+      { "@type": "PropertyValue", "name": "Cucina", "value": "abitabile" }
+    ],
+    "offers": {
+      "@type": "Offer",
+      "price": 1200,
+      "priceCurrency": "EUR",
+      "availability": "https://schema.org/InStock",
+      "businessFunction": "https://schema.org/LeaseOut"
+    }
+  }
+}

@@ -12,7 +12,7 @@ export type Issue =
   | "looks_like_rent";
 
 export type ListingData = {
-  source: "nextData" | "text" | "manual";
+  source: "nextData" | "jsonLd" | "text" | "manual";
   url?: string;
   /** Chiave per non contare due volte lo stesso annuncio: "immobiliare:<id>", URL senza query, "text:<hash>", "manual:<hash>". */
   listingKey: string;

@@ -12,7 +12,12 @@ const fiscal: FiscalTable = {
   registroMinimo: param(1000),
   ipotecariaCatastaleFisse: param(100),
   agencyPct: param(3.66),
-  notaryEstimate: param(2500),
+  notaryDeedBase: param(1800),
+  notaryDeedPct: param(0.35),
+  mortgageNotaryPct: param(1),
+  substituteTaxPctPrimaCasa: param(0.25),
+  substituteTaxPctOther: param(2),
+  bankFees: param(750),
   cedolareLongTermPct: param(21),
   cedolareShortTermPct: param(21),
 };

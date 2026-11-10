@@ -53,7 +53,7 @@ test("comprare una casa così: prezzo di zona, soldi da avere subito e rata", ()
   const a = analyzeRental(listing, DEFAULT_SETTINGS, deps);
   if (a.kind !== "ok") throw new Error("atteso ok");
   const price = 280000; // 4000 €/mq × 70 m²
-  const taxes = acquisitionCosts({ price, firstHome: true }, FISCAL_DEFAULTS).total;
+  const taxes = acquisitionCosts({ price, firstHome: true, loan: price * 0.8 }, FISCAL_DEFAULTS).total; // con i costi del mutuo
   expect(a.buy!.price).toBe(price);
   expect(a.buy!.upfront).toBeCloseTo(price * 0.2 + taxes, 2);
   expect(a.buy!.mortgageMonthly).toBeCloseTo(monthlyPayment(price * 0.8, 3.5, 25), 2);

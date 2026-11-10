@@ -12,7 +12,12 @@ const fiscal: FiscalTable = {
   registroMinimo: param(1000),
   ipotecariaCatastaleFisse: param(100),
   agencyPct: param(3.66),
-  notaryEstimate: param(2500),
+  notaryDeedBase: param(1800),
+  notaryDeedPct: param(0.35),
+  mortgageNotaryPct: param(1),
+  substituteTaxPctPrimaCasa: param(0.25),
+  substituteTaxPctOther: param(2),
+  bankFees: param(750),
   cedolareLongTermPct: param(21),
   cedolareShortTermPct: param(21),
 };
@@ -104,18 +109,24 @@ test("analisi completa", () => {
   expect(a.strategies.map((s) => s.usage)).toEqual(["live", "longTerm", "students", "airbnb"]);
   expect(a.market).toMatchObject({ precision: "zona" });
   expect(a.verdict).toMatchObject({ level: "in_linea", pricePerSqm: 2000 });
-  expect(a.acquisition).toMatchObject({ total: 13920, outlay: 213920 });
+  // Costi d'acquisto 13.920 € più quelli del mutuo da 160.000 €: imposta sostitutiva 400 €, atto di mutuo 1.600 €, banca 750 €.
+  expect(a.acquisition).toMatchObject({ mortgageTax: 400, mortgageNotary: 1600, bankFees: 750, total: 13920 + 2750, outlay: 213920 + 2750 });
   expect(a.renovation).toBe(15000); // abitabile → lavori leggeri, 150 €/mq
   expect(a.mortgageMonthly).toBeCloseTo(801, 1); // 160.000 € al 3,5% per 25 anni
 });
 
 test("costo per entrare per uso: la prima casa vale solo se ci vivi", () => {
   const a = ok(listing); // prima casa: registro al 2% solo per "viverci", 9% per gli affitti
-  const secondHomeExtra = 14000; // 200.000 € × (9% − 2%)
+  const secondHomeExtra = 14000 + 2800; // registro: 200.000 € × (9% − 2%); imposta sostitutiva: 160.000 € × (2% − 0,25%)
   expect(a.totalToEnter.live).toBe(a.acquisition.outlay + a.renovation);
   expect(a.totalToEnter.longTerm).toBe(a.acquisition.outlay + a.renovation + secondHomeExtra);
   expect(a.totalToEnter.students).toBe(a.acquisition.outlay + a.renovation + secondHomeExtra + 3600);
   expect(a.totalToEnter.airbnb).toBe(a.acquisition.outlay + a.renovation + secondHomeExtra + 30000);
+});
+
+test("senza mutuo (tutto in contanti) non ci sono costi del mutuo", () => {
+  const a = ok(listing, { ...DEFAULT_SETTINGS, downPaymentPct: 100 });
+  expect(a.acquisition).toMatchObject({ mortgageTax: 0, mortgageNotary: 0, bankFees: 0, total: 13920 });
 });
 
 test("già seconda casa: nessuna differenza tra gli usi", () => {

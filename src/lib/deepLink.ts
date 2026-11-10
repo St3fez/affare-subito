@@ -1,15 +1,25 @@
-import { normalizeListingUrl } from "./listing/url";
+import { listingUrlFromText, normalizeListingUrl } from "./listing/url";
 
-/** `affaresubito://analizza?url=<indirizzo codificato>` → l'indirizzo dell'annuncio, solo se è http o https. */
-export function listingUrlFromDeepLink(link: string): string | null {
-  const match = link.match(/[?&]url=([^&]*)/);
+function queryValue(link: string, name: string): string | null {
+  const match = link.match(new RegExp(`[?&]${name}=([^&]*)`));
   if (!match || !match[1]) return null;
-  let decoded: string;
   try {
-    decoded = decodeURIComponent(match[1]);
+    return decodeURIComponent(match[1]);
   } catch {
     return null;
   }
-  if (!/^https?:\/\//i.test(decoded)) return null;
+}
+
+/**
+ * Il link con cui l'app viene aperta → l'indirizzo dell'annuncio, solo se è http o https.
+ * - `affaresubito://analizza?url=<indirizzo codificato>`: un indirizzo.
+ * - `affaresubito://analizza?testo=<testo codificato>`: il testo che un'altra app manda con Condividi ("Guarda questo annuncio: https://…").
+ */
+export function listingUrlFromDeepLink(link: string): string | null {
+  const shared = queryValue(link, "testo");
+  if (shared) return listingUrlFromText(shared);
+
+  const decoded = queryValue(link, "url");
+  if (!decoded || !/^https?:\/\//i.test(decoded)) return null;
   return normalizeListingUrl(decoded);
 }

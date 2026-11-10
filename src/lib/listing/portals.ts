@@ -52,6 +52,12 @@ function hostOf(url: string): string {
   return (/^https?:\/\/([^/?#]+)/i.exec(url)?.[1] ?? "").toLowerCase();
 }
 
+/** `true` per i portali di cui sopra, che hanno un lettore di testo curato: per loro il testo vale più del JSON-LD. */
+export function hasPortalTextReader(url?: string): boolean {
+  if (!url) return false;
+  return /(^|\.)(toscano|tecnocasa|idealista)\.it$/.test(hostOf(url));
+}
+
 /** `null` se l'indirizzo non è di un portale che conosciamo o la pagina non ha il riassunto atteso. */
 export function readPortalText(text: string, url?: string): PortalRead | null {
   if (!url) return null;

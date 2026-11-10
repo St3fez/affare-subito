@@ -98,7 +98,7 @@ export function RentResultScreen({ item, lastFree, onBack }: { item: SavedAnalys
           <Row
             label="Soldi da avere subito"
             value={formatCurrency(buy.upfront)}
-            note={`Anticipo del ${settings.downPaymentPct}%, più imposte da prima casa, notaio e agenzia`}
+            note={`Anticipo del ${settings.downPaymentPct}%, più imposte da prima casa, notaio, agenzia e spese del mutuo`}
             bold
           />
           <Text style={styles.small}>

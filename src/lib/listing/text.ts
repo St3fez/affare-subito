@@ -1,4 +1,5 @@
 import { parseFlexibleNumber, toNumber } from "../format";
+import { isProvinceCode, provinceCodeFromText } from "./provinces";
 import { stableHash } from "./hash";
 import { readPortalText } from "./portals";
 import type { Condition, ListingData } from "../types";
@@ -62,6 +63,12 @@ const LOCATION_STOP_WORDS = [
   "sky",
   "comune",
   "visita",
+  // "zona giorno", "zona notte": parti della casa.
+  "giorno",
+  "notte",
+  // Righe di menu ("Brescia Provincia", "Brescia Prov."): non sono un quartiere.
+  "provincia",
+  "prov",
 ];
 
 function normalizeText(text: string): string {
@@ -434,8 +441,8 @@ function extractBathrooms(text: string): number | null {
     .map((line) => normalizeSpeechPhrase(line))
     .filter(Boolean);
   const tokenPattern = "(\\d{1,2}|un|uno|una|due|tre|quattro|cinque|sei|sette|otto|nove|dieci)";
-  const labelFirst = new RegExp(`\\bbagni?\\b\\s*[:\\-]?\\s*${tokenPattern}\\b`, "i");
-  const valueFirst = new RegExp(`\\b${tokenPattern}\\s+bagni?\\b`, "i");
+  const labelFirst = new RegExp(`\\bbagn[oi]\\b\\s*[:\\-]?\\s*${tokenPattern}\\b`, "i");
+  const valueFirst = new RegExp(`\\b${tokenPattern}\\s+bagn[oi]\\b`, "i");
 
   for (const line of lines) {
     const match = line.match(labelFirst);
@@ -616,22 +623,34 @@ function cleanupLocation(value: string): string {
   return titleCase(cleaned);
 }
 
+/**
+ * La provincia come sigla, mai come pezzo di testo: la sigla accanto al comune ("Brescia (BS)"), poi "provincia di <nome>" e
+ * "prov. <nome o sigla>", e solo se il nome è quello di una provincia vera. Il resto della pagina (menu, "ricerche simili")
+ * nomina spesso la parola "provincia" seguita da altro.
+ */
 function extractProvince(text: string): string {
   const compact = text.replace(/\n+/g, " ").replace(/\s+/g, " ").trim();
-  const provincePatterns = [
-    // Senza il flag `i`: il nome comincia con la maiuscola, così "e provincia offrendo un servizio" non è una provincia.
-    /(?:[Pp]rovincia|PROVINCIA)(?:\s+(?:[Dd]i|DI))?\s+([A-ZÀ-Ú][A-Za-zÀ-ú' -]{1,30})/u,
-    /(?:[Pp]rov|PROV)\.\s*([A-ZÀ-Ú][A-Za-zÀ-ú' -]{1,30})/u,
-    /\(([A-Z]{2})\)/u,
-  ];
 
-  for (const pattern of provincePatterns) {
-    const match = compact.match(pattern);
-    const raw = match?.[1]?.trim();
-    if (!raw) continue;
-    if (/^[A-Za-z]{2}$/.test(raw)) return raw.toUpperCase();
-    const cleaned = cleanupLocation(raw);
-    if (cleaned) return cleaned;
+  for (const match of compact.matchAll(/\(([A-Z]{2})\)/gu)) {
+    if (isProvinceCode(match[1])) return match[1];
+  }
+
+  // "Via Daniele Comboni 24, Brescia, 25123 (Brescia)": il nome della provincia tra parentesi dopo il CAP.
+  for (const match of compact.matchAll(/\b\d{5}\s*\(([A-Za-zÀ-ú' -]{3,40})\)/gu)) {
+    const code = provinceCodeFromText(match[1]);
+    if (code) return code;
+  }
+
+  const named = [
+    // Senza il flag `i`: il nome comincia con la maiuscola, così "e provincia offrendo un servizio" non è una provincia.
+    /(?:[Pp]rovincia|PROVINCIA)(?:\s+(?:[Dd]i|DI))?\s+([A-ZÀ-Ú][A-Za-zÀ-ú' -]{1,40})/gu,
+    /(?:[Pp]rov|PROV)\.\s*([A-ZÀ-Ú][A-Za-zÀ-ú' -]{1,40})/gu,
+  ];
+  for (const pattern of named) {
+    for (const match of compact.matchAll(pattern)) {
+      const code = provinceCodeFromText(match[1]);
+      if (code) return code;
+    }
   }
   return "";
 }
@@ -796,9 +815,13 @@ function extractTitle(text: string): string {
     .map((line) => line.trim())
     .filter((line) => line.length >= 8 && line.length <= 90 && !isLikelyPortalUiLine(line));
 
+  // Un titolo comincia con il tipo di immobile e con la maiuscola ("Trilocale in vendita…"). Non lo sono una riga che comincia con
+  // un articolo o una preposizione ("La richiesta di abitazioni in affitto in questa parte della città…", una frase della
+  // descrizione) né una ricerca suggerita dal sito ("locali commerciali in affitto roma").
+  const startsLikeSentence = /^(?:il|lo|la|le|gli|i|un|uno|una|nel|nella|nei|nelle|in|a|per|con|su|da|di|del|della|dei|delle)\s/i;
   const priorityCandidate = lines.find((line) => {
     const normalized = normalizeText(line);
-    return normalized.includes("in vendita") || normalized.includes("in affitto");
+    return (normalized.includes("in vendita") || normalized.includes("in affitto")) && /^\p{Lu}/u.test(line) && !startsLikeSentence.test(line);
   });
   if (priorityCandidate) return stripTrailingPunctuation(priorityCandidate);
 
@@ -824,6 +847,99 @@ export function inferContract(text: string, url?: string): ListingData["contract
 }
 
 const roundOrNull = (value: number | null) => (value === null ? null : Math.round(value));
+
+const NO_ELEVATOR =
+  /\b(?:senza|privo di|sprovvist[oa] di|no)\s+ascensore\b|\bnon\s+(?:(?:e\s+)?(?:servit[oa]|dotat[oa]|provvist[oa])\s+(?:da|di)|c e)\s+(?:un\s+|l\s+)?ascensore\b/;
+const HAS_ELEVATOR = /\b(?:con|dotat[oa] di|provvist[oa] di|munit[oa] di|servit[oa] da|presenza di)\s+(?:un\s+)?ascensore\b|\bascensorat[oa]\b|\bascensore condominiale\b/;
+
+function elevatorFromText(text: string): boolean | null {
+  const normalized = normalizeSpeechPhrase(text);
+  if (NO_ELEVATOR.test(normalized)) return false;
+  if (HAS_ELEVATOR.test(normalized)) return true;
+  return null;
+}
+
+const COUNT_WORD = "(?:\\d{1,2}|un|uno|una|due|tre|quattro|cinque|sei|sette|otto|nove|dieci)";
+
+/** I numeri scritti subito prima di un nome ("tre grandi camere", "due bagni"), con al massimo `maxWordsBetween` parole in mezzo. */
+function countsBefore(normalized: string, noun: string, maxWordsBetween: number): number[] {
+  const pattern = new RegExp(`\\b(${COUNT_WORD})\\s+(?:[a-z]+\\s+){0,${maxWordsBetween}}${noun}\\b`, "g");
+  const counts: number[] = [];
+  let match: RegExpExecArray | null = pattern.exec(normalized);
+  while (match) {
+    const count = parseSmallCountToken(match[1]);
+    if (count !== null && count >= 1 && count <= 20) counts.push(count);
+    match = pattern.exec(normalized);
+  }
+  return counts;
+}
+
+/**
+ * Le camere da letto in un testo libero. "Tre grandi camere da letto" è il totale; se manca, si sommano le camere citate una a una
+ * ("una camera singola, … e una camera padronale" → 2). Non si prova a indovinare: senza numeri scritti → null.
+ */
+function bedroomsFromDescription(text: string): number | null {
+  const normalized = normalizeSpeechPhrase(text);
+  const total = countsBefore(normalized, "camer[ae]\\s+da\\s+letto", 2);
+  if (total.length > 0) return Math.max(...total);
+  const listed = countsBefore(normalized, "camer[ae]", 1).reduce((sum, count) => sum + count, 0);
+  return listed > 0 && listed <= 10 ? listed : null;
+}
+
+/** I bagni in un testo libero: il numero più alto scritto davanti a "bagno/bagni" ("un primo bagno … i due bagni" → 2). */
+function bathroomsFromDescription(text: string): number | null {
+  const normalized = normalizeSpeechPhrase(text);
+  if (normalized.includes("doppio bagno") || normalized.includes("doppi servizi")) return 2;
+  const counts = countsBefore(normalized, "bagn[oi]", 1);
+  return counts.length > 0 ? Math.max(...counts) : null;
+}
+
+const ORDINAL_FLOORS: Record<string, string> = { primo: "1", secondo: "2", terzo: "3", quarto: "4", quinto: "5", sesto: "6", settimo: "7", ottavo: "8", nono: "9", decimo: "10" };
+const FLOOR_ORDINAL = Object.keys(ORDINAL_FLOORS).join("|");
+
+/**
+ * Il piano in un testo libero: solo se è detto con un numero ("al secondo piano", "al 4° piano", "piano 3") e uno solo.
+ * "Piano terra" e "interrato" nel testo di solito descrivono altre parti dell'edificio (giardino, cantina, box), non la casa;
+ * con due piani diversi citati ("zona giorno al primo piano, notte al secondo") il piano della casa non si sa.
+ */
+function floorFromDescription(text: string): string {
+  const normalized = normalizeSpeechPhrase(text);
+  const found = new Set<string>();
+  const pattern = new RegExp(`\\b(${FLOOR_ORDINAL})\\s+piano\\b|\\bpiano\\s+(${FLOOR_ORDINAL})\\b|\\b(\\d{1,2})\\s+piano\\b|\\bpiano\\s+(\\d{1,2})\\b`, "g");
+  let match: RegExpExecArray | null = pattern.exec(normalized);
+  while (match) {
+    const word = match[1] ?? match[2];
+    found.add(word ? ORDINAL_FLOORS[word] : (match[3] ?? match[4]));
+    match = pattern.exec(normalized);
+  }
+  return found.size === 1 ? [...found][0] : "";
+}
+
+/** Nel testo di un'agenzia "box" da solo è l'autorimessa ("cucina, box e scala"), tranne il "box doccia". */
+function garageFromDescription(text: string): boolean | null {
+  const known = extractGarageFeature(text);
+  if (known !== null) return known;
+  return /\bbox\b(?!\s+(?:doccia|bici|moto))/.test(normalizeSpeechPhrase(text)) ? true : null;
+}
+
+/** Le voci sulla casa che una descrizione libera può dire; ciò che non dice resta ignoto (null, o "" per il piano). */
+export type DescriptionDetails = Pick<ListingData, "bedrooms" | "bathrooms" | "floor" | "condition" | "hasElevator" | "hasGarage" | "condoMonthly">;
+
+/**
+ * Serve a riempire ciò che i dati strutturati di un portale non hanno (camere, bagni, piano, ascensore, box, stato, spese):
+ * la descrizione dell'annuncio, scritta dall'agenzia, spesso lo dice.
+ */
+export function readDescriptionDetails(description: string): DescriptionDetails {
+  return {
+    bedrooms: bedroomsFromDescription(description),
+    bathrooms: bathroomsFromDescription(description),
+    floor: floorFromDescription(description),
+    condition: parseCondition(description),
+    hasElevator: elevatorFromText(description),
+    hasGarage: garageFromDescription(description),
+    condoMonthly: extractCondoMonthly(description),
+  };
+}
 
 /**
  * Il testo di una pagina di annuncio (o incollato dall'utente) → l'annuncio. I portali che conosciamo (`portals.ts`) si leggono
@@ -853,18 +969,8 @@ export function parseListingText(text: string, url?: string): ListingData {
         extractTopStandalonePrice(text));
   const { city, zone } = extractCityZone(text);
   const normalized = normalizeText(text);
-  const normalizedBody = normalizeText(body);
 
-  let hasElevator: boolean | null = null;
-  if (normalizedBody.includes("senza ascensore") || normalizedBody.includes("no ascensore")) {
-    hasElevator = false;
-  } else if (
-    normalizedBody.includes("con ascensore") ||
-    normalizedBody.includes("dotato di ascensore") ||
-    normalizedBody.includes("ascensorato")
-  ) {
-    hasElevator = true;
-  }
+  const hasElevator = elevatorFromText(body);
 
   return {
     source: "text",

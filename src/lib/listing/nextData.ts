@@ -10,7 +10,17 @@ export function conditionFromPortalLabel(label: string): Condition | null {
   return null;
 }
 
-function positiveNumber(value: unknown): number | null {
+/** Ciò che si legge dai dati strutturati di un portale: l'annuncio e il testo della descrizione, da cui riempire i buchi. */
+export type StructuredRead = {
+  listing: ListingData;
+  description: string;
+  /** Il portale non dice le camere da letto: se nemmeno la descrizione le dice, si stimano dai locali (locali − 1). */
+  bedroomsFromRooms?: boolean;
+  /** Camere da letto che il portale dà ma che si ritengono stimate (di solito locali − 1): valgono solo se la descrizione tace. */
+  bedroomsFallback?: number | null;
+};
+
+export function positiveNumber(value: unknown): number | null {
   if (typeof value === "number") return Number.isFinite(value) && value > 0 ? value : null;
   if (typeof value === "string") {
     const parsed = parseFlexibleNumber(value);
@@ -19,11 +29,11 @@ function positiveNumber(value: unknown): number | null {
   return null;
 }
 
-function finiteNumber(value: unknown): number | null {
+export function finiteNumber(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
-function text(value: unknown): string {
+export function text(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
@@ -35,7 +45,10 @@ export function parseNextData(json: string, url?: string): ListingData | null {
   } catch {
     return null;
   }
+  return readImmobiliareData(data, url)?.listing ?? null;
+}
 
+export function readImmobiliareData(data: any, url?: string): StructuredRead | null {
   const realEstate = data?.props?.pageProps?.detailData?.realEstate;
   const property = realEstate?.properties?.[0];
   if (!realEstate || !property || realEstate.id == null) return null;
@@ -43,8 +56,11 @@ export function parseNextData(json: string, url?: string): ListingData | null {
   const location = property.location ?? {};
   const contract = realEstate.contract === "sale" ? "sale" : realEstate.contract === "rent" ? "rent" : "unknown";
   const garage = text(property.garage);
+  // "4 (3 camere da letto, 1 altro), 2 bagni, Cucina a vista": il riepilogo dice camere e bagni anche quando i campi mancano.
+  const summary = text(property.roomsValue);
+  const fromSummary = (pattern: RegExp) => positiveNumber(pattern.exec(summary)?.[1]);
 
-  return {
+  const listing: ListingData = {
     source: "nextData",
     url,
     listingKey: `immobiliare:${realEstate.id}`,
@@ -54,8 +70,8 @@ export function parseNextData(json: string, url?: string): ListingData | null {
     price: positiveNumber(realEstate.price?.value),
     sqm: positiveNumber(property.surface),
     rooms: positiveNumber(property.rooms),
-    bedrooms: positiveNumber(property.bedRoomsNumber),
-    bathrooms: positiveNumber(property.bathrooms),
+    bedrooms: positiveNumber(property.bedRoomsNumber) ?? fromSummary(/(\d+)\+?\s+camer[ae]\s+da\s+letto/i),
+    bathrooms: positiveNumber(property.bathrooms) ?? fromSummary(/(\d+)\+?\s+bagn[oi]/i),
     floor: text(property.floor?.floorOnlyValue),
     condition: conditionFromPortalLabel(text(property.condition)),
     hasElevator: typeof property.elevator === "boolean" ? property.elevator : null,
@@ -68,4 +84,5 @@ export function parseNextData(json: string, url?: string): ListingData | null {
     lat: finiteNumber(location.latitude),
     lng: finiteNumber(location.longitude),
   };
+  return { listing, description: text(property.description) };
 }

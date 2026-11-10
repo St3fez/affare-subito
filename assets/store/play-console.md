@@ -1,6 +1,6 @@
 # Affare Subito: cosa serve alla Play Console
 
-Pacchetto `com.st3fez.affaresubito`, versione 1.0.0 (versionCode 2026102701). Tutto in italiano.
+Pacchetto `com.st3fez.affaresubito`, versione 1.0.0 (versionCode 2026111001, bundle rifatto il 10/11/2026: stessa chiave di caricamento, impronta qui sotto). Tutto in italiano.
 
 ## File da caricare
 
@@ -53,23 +53,23 @@ dell'informativa (`docs/index.html`): oggi dicono che non si rinnova.
 **Descrizione breve** (80 caratteri al massimo):
 
 ```
-Incolla il link di un annuncio e scopri se il prezzo o l'affitto è giusto.
+Condividi un annuncio e scopri se il prezzo o l'affitto è giusto.
 ```
 
 **Descrizione completa** (4.000 caratteri al massimo):
 
 ```
-Stai per comprare o affittare casa e non sai se il prezzo è giusto? Incolla il link dell'annuncio: Affare Subito lo legge e lo confronta con i valori di mercato della zona.
+Stai per comprare o affittare casa e non sai se il prezzo è giusto? Dall'annuncio tocca Condividi e scegli Affare Subito (oppure incolla il link): l'app lo legge e lo confronta con i valori di mercato della zona.
 
 COSA TI DICE
 • Se il prezzo è sotto, in linea o sopra il mercato, con la fascia di prezzo della zona e il modo in cui i valori sono cambiati negli ultimi anni.
 • Per gli affitti: se il canone è giusto, e quanto costerebbe invece comprare una casa simile (anticipo, imposte e rata del mutuo).
-• Quanto costa davvero entrare in una casa che compri: imposte, notaio, agenzia, lavori e arredo. Ogni cifra stimata è segnata come stima.
+• Quanto costa davvero entrare in una casa che compri: imposte, notaio, agenzia, spese del mutuo (imposta sostitutiva, notaio, banca), lavori e arredo. Ogni cifra stimata è segnata come stima.
 • Come potrebbe rendere la casa in quattro modi: viverci, affitto a lungo termine, stanze a studenti, affitto breve. Entrate, spese, tasse e resa netta, con ipotesi che puoi modificare.
 • Un archivio delle analisi e il confronto tra due case.
 
 COME FUNZIONA
-Incolli il link, l'app apre la pagina come farebbe il tuo browser e legge prezzo, metri quadri e comune. Controlli i dati, correggi quello che non torna e ottieni il risultato. Se un sito non si lascia leggere puoi incollare il testo dell'annuncio o inserire i dati a mano.
+Apri l'annuncio sul sito o nell'app del portale, tocca Condividi e scegli Affare Subito (o incolla il link). L'app apre la pagina come farebbe il tuo browser e legge prezzo, metri quadri, comune e il resto dei dati. Controlli i dati, correggi quello che non torna e ottieni il risultato. Funziona bene con immobiliare.it, casa.it, idealista.it, tecnocasa.it, toscano.it e remax.it. Se un sito non si lascia leggere puoi incollare il testo dell'annuncio o inserire i dati a mano.
 In molte grandi città la zona si trova dalla posizione dell'annuncio, e il confronto è con i valori di quella zona e non con la media di tutta la città.
 
 QUANTO COSTA
@@ -82,10 +82,16 @@ FONTI E LIMITI
 I valori di mercato vengono dalle quotazioni dell'Osservatorio del Mercato Immobiliare (OMI) dell'Agenzia delle Entrate. I risultati sono stime basate su valori di zona e su ipotesi che puoi modificare: non sono consulenza finanziaria, fiscale o legale. Prima di acquistare, affittare o investire rivolgiti a un professionista.
 ```
 
-**Novità di questa versione:**
+**Novità di questa versione** (500 caratteri al massimo). Se è il primo rilascio pubblicato:
 
 ```
-Prima versione di Affare Subito: verdetto sul prezzo, costo per entrare, affitti, quattro usi della casa, archivio e confronto.
+Prima versione di Affare Subito: condividi l'annuncio dal portale e ottieni il verdetto sul prezzo, il costo per entrare, gli affitti, quattro usi della casa, l'archivio e il confronto.
+```
+
+Se invece una versione precedente (per esempio la 2026102701) è già online, usa questa:
+
+```
+Condividi l'annuncio dall'app o dal sito del portale (immobiliare.it, casa.it, idealista.it, tecnocasa.it, RE/MAX) e l'analisi parte da sola. Letture più precise degli annunci e costi d'acquisto più realistici: notaio in base al prezzo e spese del mutuo.
 ```
 
 **Categoria:** Casa e arredamento (House & Home). **Tag:** immobili, mutuo, affitto. **Indirizzo e-mail di contatto:** il tuo (è pubblico nella scheda).

@@ -11,8 +11,18 @@ export type FiscalTable = {
   ipotecariaCatastaleFisse: Param<number>;
   /** % del prezzo, IVA inclusa. */
   agencyPct: Param<number>;
-  /** € forfettari. */
-  notaryEstimate: Param<number>;
+  /** € fissi del notaio per il rogito, IVA compresa (parte fissa dell'onorario, più `notaryDeedPct` del prezzo). */
+  notaryDeedBase: Param<number>;
+  /** % del prezzo, IVA compresa. */
+  notaryDeedPct: Param<number>;
+  /** % del mutuo, IVA compresa: onorario del notaio per l'atto di mutuo e spese collegate. */
+  mortgageNotaryPct: Param<number>;
+  /** % del mutuo: imposta sostitutiva, se si hanno i requisiti prima casa. */
+  substituteTaxPctPrimaCasa: Param<number>;
+  /** % del mutuo: imposta sostitutiva negli altri casi (seconda casa e simili). */
+  substituteTaxPctOther: Param<number>;
+  /** € per perizia e istruttoria della banca. */
+  bankFees: Param<number>;
   cedolareLongTermPct: Param<number>;
   cedolareShortTermPct: Param<number>;
 };
@@ -45,9 +55,36 @@ export const FISCAL_DEFAULTS: FiscalTable = {
     source: "Stima: provvigione tipica 2-4% più IVA al 22% (3% + IVA = 3,66%); nessuna tariffa di legge (fonti divulgative: money.it, realadvisor.it, studiomadera.it)",
     verifiedAt: null,
   },
-  notaryEstimate: {
-    value: 2500,
-    source: "Stima: onorario libero dal 2012, varia con prezzo e mutuo (fonti divulgative: notaionline.it, studiomadera.it); chiedere un preventivo",
+  notaryDeedBase: {
+    value: 1800,
+    source:
+      "Stima, IVA compresa: onorario libero dal 2012. Per un rogito da 200.000 € le fonti divulgative danno da circa 1.370 € (NotaiOnline.it, 2026) a 2.480-3.650 € (studiomadera.it); con 1.800 € più lo 0,35% del prezzo si resta a metà. Chiedere un preventivo",
+    verifiedAt: null,
+  },
+  notaryDeedPct: {
+    value: 0.35,
+    source: "Stima, IVA compresa: la pendenza è quella delle fasce di prezzo di studiomadera.it (circa 0,37% in più ogni 100.000 € di prezzo); vedi anche notaionline.it",
+    verifiedAt: null,
+  },
+  mortgageNotaryPct: {
+    value: 1,
+    source:
+      "Stima, IVA compresa: l'atto di mutuo costa dallo 0,6% del mutuo più IVA (NotaiOnline.it, 2026, circa 0,73%) a circa l'1,3% (studiomadera.it, 1.950-2.560 € su 200.000 €); preso l'1% a metà. Chiedere un preventivo",
+    verifiedAt: null,
+  },
+  substituteTaxPctPrimaCasa: {
+    value: 0.25,
+    source: "Imposta sostitutiva sul mutuo per la prima casa: 0,25% dell'importo erogato (art. 17 DPR 601/1973; esempio con i conti su notaionline.it/guida/costo-notaio-prima-casa-con-mutuo, 2026)",
+    verifiedAt: "2026-11-10",
+  },
+  substituteTaxPctOther: {
+    value: 2,
+    source: "Imposta sostitutiva sul mutuo negli altri casi (seconda casa, ristrutturazioni senza agevolazione): 2% dell'importo erogato (art. 17 DPR 601/1973; notaionline.it/calcolo-notaio/mutuo)",
+    verifiedAt: "2026-11-10",
+  },
+  bankFees: {
+    value: 750,
+    source: "Stima: perizia circa 350 € e istruttoria da 0 a 1% del mutuo (spesso una quota fissa di 180-300 €, in certe offerte gratis); per un mutuo da 150.000 € le spese accessorie sono 1.000-2.000 € (facile.it, guide 2026). Chiedere il foglio informativo alla banca",
     verifiedAt: null,
   },
   cedolareLongTermPct: {
@@ -66,7 +103,14 @@ export type Acquisition = {
   registro: number;
   ipotecariaCatastale: number;
   agency: number;
+  /** Il notaio per il rogito. */
   notary: number;
+  /** Il notaio per l'atto di mutuo (0 senza mutuo). */
+  mortgageNotary: number;
+  /** Imposta sostitutiva sul mutuo (0 senza mutuo). */
+  mortgageTax: number;
+  /** Perizia e istruttoria della banca (0 senza mutuo). */
+  bankFees: number;
   /** Solo i costi extra, senza il prezzo. */
   total: number;
   /** Prezzo più costi extra. */
@@ -76,17 +120,25 @@ export type Acquisition = {
 
 /**
  * Acquisto da privato: l'imposta di registro si calcola sul prezzo (senza il "prezzo-valore"),
- * quindi sovrastima: la UI lo dice.
+ * quindi sovrastima: la UI lo dice. Con `loan` (importo del mutuo) si aggiungono i costi del mutuo.
  */
-export function acquisitionCosts(input: { price: number; firstHome: boolean }, table: FiscalTable): Acquisition {
+export function acquisitionCosts(input: { price: number; firstHome: boolean; loan?: number }, table: FiscalTable): Acquisition {
   const { price, firstHome } = input;
-  if (!(price > 0)) return { registro: 0, ipotecariaCatastale: 0, agency: 0, notary: 0, total: 0, outlay: 0 };
+  const loan = input.loan ?? 0;
+  if (!(price > 0)) return { registro: 0, ipotecariaCatastale: 0, agency: 0, notary: 0, mortgageNotary: 0, mortgageTax: 0, bankFees: 0, total: 0, outlay: 0 };
 
   const registroPct = firstHome ? table.registroPctPrimaCasa.value : table.registroPctSeconda.value;
   const registro = cents(Math.max(table.registroMinimo.value, price * (registroPct / 100)));
   const ipotecariaCatastale = cents(table.ipotecariaCatastaleFisse.value);
   const agency = cents(price * (table.agencyPct.value / 100));
-  const notary = cents(table.notaryEstimate.value);
-  const total = cents(registro + ipotecariaCatastale + agency + notary);
-  return { registro, ipotecariaCatastale, agency, notary, total, outlay: cents(price + total) };
+  const notary = cents(table.notaryDeedBase.value + price * (table.notaryDeedPct.value / 100));
+
+  const hasLoan = loan > 0;
+  const substitutePct = firstHome ? table.substituteTaxPctPrimaCasa.value : table.substituteTaxPctOther.value;
+  const mortgageTax = hasLoan ? cents(loan * (substitutePct / 100)) : 0;
+  const mortgageNotary = hasLoan ? cents(loan * (table.mortgageNotaryPct.value / 100)) : 0;
+  const bankFees = hasLoan ? cents(table.bankFees.value) : 0;
+
+  const total = cents(registro + ipotecariaCatastale + agency + notary + mortgageNotary + mortgageTax + bankFees);
+  return { registro, ipotecariaCatastale, agency, notary, mortgageNotary, mortgageTax, bankFees, total, outlay: cents(price + total) };
 }

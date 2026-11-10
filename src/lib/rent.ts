@@ -46,7 +46,7 @@ export function analyzeRental(
   if (saleRange) {
     const price = toThousands(((saleRange.min + saleRange.max) / 2) * sqm);
     const downPayment = price * (settings.downPaymentPct / 100);
-    const taxes = acquisitionCosts({ price, firstHome: true }, deps.fiscal).total;
+    const taxes = acquisitionCosts({ price, firstHome: true, loan: price - downPayment }, deps.fiscal).total;
     buy = {
       price,
       upfront: roundCents(downPayment + taxes),

@@ -63,6 +63,46 @@ describe("listingFromWebViewMessage", () => {
   test("pagina bloccata → null", () => {
     expect(listingFromWebViewMessage(message({ blocked: true, nextData }))).toBeNull();
   });
+
+  describe("JSON-LD (RE/MAX e altri portali senza dati di Next.js)", () => {
+    const remax = require("../__fixtures__/remax-jsonld.json");
+    const remaxUrl = remax.sale.url;
+    // Il testo di una pagina RE/MAX ha anche "Immobili simili", con altri prezzi: il lettore di testo sceglierebbe quello sbagliato.
+    const textWithSimilar = `Appartamento in vendita a Brescia, Brescia est
+Via Daniele Comboni 24, Brescia, 25123 (Brescia)
+290.000 €
+160 mq
+5 locali
+2 bagni
+IMMOBILI SIMILI
+298.000 €
+APPARTAMENTO IN VENDITA A BRESCIA, CENTRO STORICO
+96 mq
+`.repeat(2);
+
+    test("l'annuncio viene dal JSON-LD, non dal testo con gli immobili simili", () => {
+      const listing = listingFromWebViewMessage(message({ url: remaxUrl, jsonLd: [JSON.stringify(remax.sale)], bodyText: textWithSimilar }));
+      expect(listing).toMatchObject({ source: "jsonLd", price: 290000, sqm: 160, city: "Brescia", province: "BS", lat: 45.5314514, listingKey: expect.stringMatching(/^url:progress\.remax\.it\//) });
+    });
+
+    test("basta il JSON-LD, anche senza testo utile", () => {
+      expect(listingFromWebViewMessage(message({ url: remaxUrl, jsonLd: [JSON.stringify(remax.sale)], bodyText: "" }))).toMatchObject({ price: 290000 });
+    });
+
+    test("un JSON-LD senza annuncio → si ripiega sul testo", () => {
+      const listing = listingFromWebViewMessage(message({ url: "https://x.it/1", jsonLd: [JSON.stringify({ "@type": "Organization" })], bodyText: longText }));
+      expect(listing).toMatchObject({ source: "text", price: 340000 });
+    });
+
+    test("i portali con un lettore di testo curato (idealista, tecnocasa, toscano) restano sul testo", () => {
+      const fs = require("fs");
+      const text = fs.readFileSync(require("path").join(__dirname, "../__fixtures__/portals/idealista-sale-milano-affori.txt"), "utf8");
+      const withoutLd = listingFromWebViewMessage(message({ url: "https://www.idealista.it/immobile/1/", bodyText: text }));
+      const withLd = listingFromWebViewMessage(message({ url: "https://www.idealista.it/immobile/1/", bodyText: text, jsonLd: [JSON.stringify({ "@type": "RealEstateListing", offers: { price: 1 }, floorSize: { value: 1 } })] }));
+      expect(withoutLd).toMatchObject({ source: "text" });
+      expect(withLd).toEqual(withoutLd);
+    });
+  });
 });
 
 describe("buildExtractionScript", () => {
@@ -135,6 +175,14 @@ describe("lo script legge la posizione dalla pagina", () => {
     await jest.advanceTimersByTimeAsync(20000);
     return { posted, fetchMock };
   }
+
+  test("lo script manda i blocchi JSON-LD degli annunci, non gli altri", async () => {
+    const listingBlock = JSON.stringify({ "@context": "https://schema.org", "@type": "RealEstateListing", name: "Appartamento in vendita a Brescia", offers: { price: 290000 } });
+    const orgBlock = JSON.stringify({ "@context": "https://schema.org", "@type": "Organization", name: "REMAX Italia" });
+    const { posted } = await run({ host: "progress.remax.it", ldJson: [orgBlock, listingBlock] });
+    expect(posted).toHaveLength(1);
+    expect(posted[0].jsonLd).toEqual([listingBlock]);
+  });
 
   test("tecnocasa: la posizione sta nel sorgente della pagina, non in quella già composta, e si rilegge il sorgente", async () => {
     const { posted, fetchMock } = await run({ host: "milano18.tecnocasa.it", source: TECNOCASA_SOURCE });

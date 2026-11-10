@@ -1,6 +1,6 @@
 # Affare Subito: cosa serve alla Play Console
 
-Pacchetto `com.st3fez.affaresubito`, versione 1.0.0 (versionCode 2026102701). Tutto in italiano.
+Pacchetto `com.st3fez.affaresubito`, versione 1.0.0 (versionCode 2026111001, bundle rifatto il 10/11/2026: stessa chiave di caricamento, impronta qui sotto). Tutto in italiano.
 
 ## File da caricare
 
@@ -82,10 +82,16 @@ FONTI E LIMITI
 I valori di mercato vengono dalle quotazioni dell'Osservatorio del Mercato Immobiliare (OMI) dell'Agenzia delle Entrate. I risultati sono stime basate su valori di zona e su ipotesi che puoi modificare: non sono consulenza finanziaria, fiscale o legale. Prima di acquistare, affittare o investire rivolgiti a un professionista.
 ```
 
-**Novità di questa versione:**
+**Novità di questa versione** (500 caratteri al massimo). Se è il primo rilascio pubblicato:
 
 ```
 Prima versione di Affare Subito: condividi l'annuncio dal portale e ottieni il verdetto sul prezzo, il costo per entrare, gli affitti, quattro usi della casa, l'archivio e il confronto.
+```
+
+Se invece una versione precedente (per esempio la 2026102701) è già online, usa questa:
+
+```
+Condividi l'annuncio dall'app o dal sito del portale (immobiliare.it, casa.it, idealista.it, tecnocasa.it, RE/MAX) e l'analisi parte da sola. Letture più precise degli annunci e costi d'acquisto più realistici: notaio in base al prezzo e spese del mutuo.
 ```
 
 **Categoria:** Casa e arredamento (House & Home). **Tag:** immobili, mutuo, affitto. **Indirizzo e-mail di contatto:** il tuo (è pubblico nella scheda).

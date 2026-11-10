@@ -1,5 +1,7 @@
 package com.st3fez.affaresubito
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 
@@ -16,7 +18,27 @@ class MainActivity : ReactActivity() {
     // coloring the background, status bar, and navigation bar.
     // This is required for expo-splash-screen.
     setTheme(R.style.AppTheme);
+    // Aperta da Condividi a freddo: va girata prima che React legga l'intento iniziale.
+    shareToDeepLink(intent)?.let { setIntent(it) }
     super.onCreate(null)
+  }
+
+  /** Aperta da Condividi ad app già avviata (launchMode singleTask). */
+  override fun onNewIntent(intent: Intent) {
+    val converted = shareToDeepLink(intent) ?: intent
+    setIntent(converted)
+    super.onNewIntent(converted)
+  }
+
+  /**
+   * "Condividi" di un'altra app manda il testo con ACTION_SEND; React Native conosce solo i link. Lo giriamo in
+   * `affaresubito://analizza?testo=<testo>`, che il codice JavaScript sa già aprire (l'indirizzo lo estrae lui dal testo).
+   */
+  private fun shareToDeepLink(source: Intent?): Intent? {
+    if (source?.action != Intent.ACTION_SEND || source.type?.startsWith("text/") != true) return source
+    val text = source.getStringExtra(Intent.EXTRA_TEXT) ?: return source
+    val link = Uri.Builder().scheme("affaresubito").authority("analizza").appendQueryParameter("testo", text).build()
+    return Intent(source).setAction(Intent.ACTION_VIEW).setData(link)
   }
 
   /**

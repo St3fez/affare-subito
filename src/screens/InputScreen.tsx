@@ -2,8 +2,9 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 
 import { ListingWebView } from "../components/ListingWebView";
+import { ShareHint } from "../components/ShareHint";
 import { readListing } from "../lib/listing";
-import { normalizeListingUrl } from "../lib/listing/url";
+import { listingUrlFromText } from "../lib/listing/url";
 import { isBlockedMessage, listingFromWebViewMessage } from "../lib/listing/webviewMessage";
 import type { ListingData } from "../lib/types";
 import { Button, Card, LabeledInput, Notice, Screen } from "../ui/components";
@@ -64,9 +65,9 @@ export function InputScreen({
 
   const start = useCallback(
     (raw: string) => {
-      const normalized = normalizeListingUrl(raw);
+      const normalized = listingUrlFromText(raw);
       if (!normalized) {
-        setMessage("Questo non sembra un indirizzo web. Incolla il link dell'annuncio.");
+        setMessage("Non trovo un indirizzo web in quello che hai incollato. Incolla il link dell'annuncio.");
         return;
       }
       clearTimers();
@@ -127,7 +128,7 @@ export function InputScreen({
   return (
     <Screen
       title="Affare Subito"
-      subtitle="Incolla il link di un annuncio, in vendita o in affitto: ti dico se il prezzo è giusto."
+      subtitle="Condividi o incolla il link di un annuncio, in vendita o in affitto: ti dico se il prezzo è giusto."
       footer={
         <>
           <Button label="Inserisci i dati a mano" variant="secondary" onPress={onManual} />
@@ -135,6 +136,8 @@ export function InputScreen({
         </>
       }
     >
+      {phase === "idle" || phase === "failed" ? <ShareHint /> : null}
+
       {phase === "paste" ? (
         <Card>
           <Text style={styles.cardTitle}>Incolla il testo dell'annuncio</Text>
@@ -164,7 +167,7 @@ export function InputScreen({
             autoCapitalize="none"
           />
           <Button label="Analizza" onPress={() => start(url)} disabled={phase === "loading" || url.trim().length === 0} />
-          <Text style={styles.muted}>Funziona bene con immobiliare.it, idealista.it, tecnocasa.it e toscano.it. Con gli altri portali può servire incollare il testo.</Text>
+          <Text style={styles.muted}>Funziona bene con immobiliare.it, casa.it, idealista.it, tecnocasa.it, toscano.it e remax.it. Con gli altri portali può servire incollare il testo.</Text>
         </Card>
       )}
 

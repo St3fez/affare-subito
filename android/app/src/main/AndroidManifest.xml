@@ -26,6 +26,12 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="affaresubito"/>
       </intent-filter>
+      <!-- Condividi dai portali (immobiliare.it, casa.it, idealista, tecnocasa...): MainActivity gira il testo nel link affaresubito://analizza?testo=... -->
+      <intent-filter>
+        <action android:name="android.intent.action.SEND"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <data android:mimeType="text/plain"/>
+      </intent-filter>
     </activity>
   </application>
 </manifest>

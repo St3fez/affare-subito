@@ -106,7 +106,7 @@ describe("provincia", () => {
   });
 
   test("'provincia di Torino' e 'prov. Milano' si leggono ancora, anche in maiuscolo", () => {
-    expect(parseListingText("Bilocale in vendita a Chieri, provincia di Torino, 150.000 €, 60 m²").province).toBe("Torino");
-    expect(parseListingText("BILOCALE IN VENDITA A CHIERI - PROVINCIA DI TORINO - 150.000 € - 60 m²").province).toMatch(/^Torino$/i);
+    expect(parseListingText("Bilocale in vendita a Chieri, provincia di Torino, 150.000 €, 60 m²").province).toBe("TO");
+    expect(parseListingText("BILOCALE IN VENDITA A CHIERI - PROVINCIA DI TORINO - 150.000 € - 60 m²").province).toBe("TO");
   });
 });

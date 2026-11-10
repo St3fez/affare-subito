@@ -1,12 +1,13 @@
 import type { ListingData } from "../types";
 import { readListing, type ListingSource } from "./index";
+import { hasPortalTextReader } from "./portals";
 import { canonicalListingUrl } from "./url";
 
 const MIN_USEFUL_TEXT = 200;
 
 /**
  * Script che gira dentro la pagina dell'annuncio. Appena c'è `__NEXT_DATA__` (o, per le pagine senza, a caricamento
- * finito più 1,5 s) manda all'app `{ url, nextData, bodyText, blocked, coords }`; in ogni caso entro 12 s (più 3 se deve rileggere il sorgente).
+ * finito più 1,5 s) manda all'app `{ url, nextData, jsonLd, bodyText, blocked, coords }`; in ogni caso entro 12 s (più 3 se deve rileggere il sorgente).
  * `coords` è la posizione dell'immobile, se la pagina la dice: nei dati strutturati (schema.org) oppure, per tecnocasa.it, nel sorgente
  * della pagina (la pagina già composta non la ha più: Vue sostituisce il suo componente della mappa).
  * Scritto in JavaScript semplice (ES5) per le WebView più vecchie.
@@ -35,10 +36,17 @@ export function buildExtractionScript(): string {
     var body = (document.body && document.body.innerText) || "";
     var nd = document.getElementById("__NEXT_DATA__");
     var head = document.title + " " + body.slice(0, 2000);
+    var jsonLd = [];
+    var lds = document.querySelectorAll('script[type="application/ld+json"]');
+    for (var j = 0; j < lds.length && jsonLd.length < 4; j++) {
+      var ldText = lds[j].textContent || "";
+      if (ldText.length < 100000 && /RealEstateListing|"Apartment"|"House"|SingleFamilyResidence|"Residence"|"Accommodation"/.test(ldText)) jsonLd.push(ldText);
+    }
     function post(coords) {
       window.ReactNativeWebView.postMessage(JSON.stringify({
         url: location.href,
         nextData: nd && nd.textContent ? nd.textContent : null,
+        jsonLd: jsonLd,
         bodyText: body.slice(0, 20000),
         blocked: body.length < 3000 && /datadome|captcha|robot|verifica che sei|access denied|accesso negato/i.test(head),
         coords: coords
@@ -124,27 +132,34 @@ function withCoords(listing: ListingData, raw: string): ListingData {
 }
 
 function readMessage(raw: string): ListingData | null {
-  const source = parseWebViewMessage(raw);
-  if (!source) return null;
+  let message: any;
+  try {
+    message = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (!message || typeof message !== "object" || message.blocked === true) return null;
 
-  if (source.kind === "nextData") {
+  const url = typeof message.url === "string" ? message.url : undefined;
+
+  // 1. Dati di Next.js: immobiliare.it, casa.it. In un formato che non conosciamo si prosegue.
+  const source = parseWebViewMessage(raw);
+  if (source?.kind === "nextData") {
     const structured = readListing(source);
     if (structured) return structured;
-
-    // Dati di Next.js in un formato che non conosciamo (per esempio casa.it): si ripiega sul testo della pagina.
-    let fallback: ListingData | null = null;
-    try {
-      const message = JSON.parse(raw);
-      if (typeof message.bodyText === "string" && message.bodyText.trim().length >= MIN_USEFUL_TEXT) {
-        fallback = readListing({ kind: "text", text: message.bodyText, url: source.url });
-      }
-    } catch {
-      return null;
-    }
-    return fallback ? withUrlKey(fallback) : null;
   }
 
-  const fromText = readListing(source);
+  // 2. JSON-LD dell'annuncio (RE/MAX e altri): più sicuro del testo, dove "Immobili simili" porta altri prezzi. Non per i portali
+  // che hanno un lettore di testo curato.
+  const blocks: string[] = Array.isArray(message.jsonLd) ? message.jsonLd.filter((block: unknown): block is string => typeof block === "string") : [];
+  if (blocks.length > 0 && !hasPortalTextReader(url)) {
+    const structured = readListing({ kind: "jsonLd", blocks, url });
+    if (structured) return structured;
+  }
+
+  // 3. Il testo della pagina.
+  if (typeof message.bodyText !== "string" || message.bodyText.trim().length < MIN_USEFUL_TEXT) return null;
+  const fromText = readListing({ kind: "text", text: message.bodyText, url });
   return fromText ? withUrlKey(fromText) : null;
 }
 

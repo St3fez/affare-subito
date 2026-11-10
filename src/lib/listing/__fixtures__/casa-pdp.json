@@ -1,0 +1,219 @@
+{
+  "sale": {
+    "id": 55176836,
+    "channel": "vendita",
+    "isAuction": false,
+    "propertyType": { "label": "Appartamento", "value": "appartamento" },
+    "helmetData": { "seoData": { "h1": "Trilocale in Vendita in Via Leonida Bissolati 15 a Brescia" } },
+    "price": { "value": 139000, "min": 139000, "max": 139000, "isSingleValue": true },
+    "size": { "value": 80 },
+    "rooms": { "value": 3 },
+    "floor": { "value": "4", "min": "4", "max": "4", "isSingleValue": true },
+    "mainFeatures": { "size": "80", "rooms": "3", "baths": 1, "level": "4° piano", "parkings": 1 },
+    "energyClass": { "class": "In fase di richiesta" },
+    "address": {
+      "street": "Via Leonida Bissolati 15",
+      "town": "Brescia",
+      "province": "BS",
+      "zone": "San Polo, San Polo Parco, Sanpolino",
+      "block": "San Polo Parco",
+      "lat": 45.52011,
+      "lon": 10.231818
+    },
+    "features": {
+      "featureLists": [
+        {
+          "name": "features",
+          "items": [
+            { "label": "Superficie", "values": [{ "main": "80 m²" }] },
+            { "label": "Locali", "values": [3] },
+            { "label": "Bagni", "values": [1] },
+            { "label": "Box", "values": [{ "main": [{ "value": "singolo" }] }] },
+            { "label": "Piano", "values": [{ "main": "4°", "integrative": "ultimo piano" }] },
+            { "label": "Ascensore", "values": ["sì"] },
+            { "label": "Altre caratteristiche", "values": ["balcone", "cantina"] }
+          ]
+        },
+        {
+          "name": "energyInfos",
+          "items": [
+            { "label": "Condizioni immobile", "values": ["abitabile"] },
+            { "label": "Anno di costruzione", "values": [1970] },
+            { "label": "Riscaldamento", "values": ["centralizzato"] },
+            { "label": "Classe energetica", "values": [{ "main": { "value": "in fase di richiesta" } }] }
+          ]
+        },
+        {
+          "name": "priceInfos",
+          "items": [
+            { "label": "Stato al rogito", "values": ["libero"] },
+            { "label": "Prezzo", "values": [{ "main": { "value": "139.000", "munitBefore": "€" } }] },
+            { "label": "Spese condominiali", "values": [{ "main": { "value": "200", "munitBefore": "€", "munitAfter": "/mese" } }] }
+          ]
+        }
+      ]
+    },
+    "description": {
+      "it": {
+        "text": "OTTIMO INVESTIMENTO!\nAppartamento trilocale al quarto e ultimo piano con ascensore attualmente LOCATO!\n\nL’immobile è composto da ingresso, cucina separata, soggiorno, due camere da letto, bagno e due balconi. Completano la proprietà una cantina e un garage situati al piano interrato."
+      }
+    }
+  },
+  "rent": {
+    "id": 54913209,
+    "channel": "affitto",
+    "isAuction": false,
+    "propertyType": { "label": "Appartamento", "value": "appartamento" },
+    "helmetData": { "seoData": { "h1": "Monolocale in Affitto in Via Ugo da Como a Brescia" } },
+    "price": { "value": 660, "min": 660, "max": 660, "isSingleValue": true, "rentType": "residential" },
+    "size": { "value": 40 },
+    "rooms": { "value": 1 },
+    "floor": { "value": "piano terra" },
+    "mainFeatures": { "size": "40", "rooms": "1", "baths": 1, "level": "piano terra" },
+    "energyClass": { "class": "A1" },
+    "address": {
+      "town": "Brescia",
+      "province": "BS",
+      "zone": "Porta Venezia, Panoramica",
+      "block": null,
+      "lat": 45.530076,
+      "lon": 10.246844
+    },
+    "features": {
+      "featureLists": [
+        {
+          "name": "features",
+          "items": [
+            { "label": "Superficie", "values": [{ "main": "40 m²" }] },
+            { "label": "Locali", "values": [1] },
+            { "label": "Bagni", "values": [1] },
+            { "label": "Piano", "values": [{ "main": "piano terra", "integrative": "" }] },
+            { "label": "Ascensore", "values": ["sì"] },
+            { "label": "Arredamento", "values": ["completamente arredato"] },
+            { "label": "Altre caratteristiche", "values": ["cantina"] }
+          ]
+        },
+        {
+          "name": "energyInfos",
+          "items": [
+            { "label": "Condizioni immobile", "values": ["ristrutturato"] },
+            { "label": "Riscaldamento", "values": ["centralizzato"] },
+            { "label": "Classe energetica", "values": [{ "main": { "value": "A1" } }] }
+          ]
+        },
+        {
+          "name": "priceInfos",
+          "items": [
+            { "label": "Durata contratto", "values": [{ "main": "a lungo termine" }] },
+            { "label": "Canone affitto", "values": [{ "main": { "value": "660", "munitBefore": "€", "munitAfter": "/mese" } }] },
+            { "label": "Spese condominiali", "values": [{ "main": { "value": "50", "munitBefore": "€", "munitAfter": "/mese" } }] }
+          ]
+        }
+      ]
+    },
+    "description": {
+      "it": {
+        "text": "Brescia est a due passi da Viale Venezia e da Piazzale Arnaldo, proponiamo in affitto, all'interno di uno stabile signorile, interessante monolocale luminoso e silenzioso con l'affaccio su una corte condominiale interna."
+      }
+    }
+  },
+  "auctionVilla": {
+    "id": 54742318,
+    "channel": "vendita",
+    "isAuction": true,
+    "propertyType": { "label": "Villa", "value": "villa" },
+    "helmetData": { "seoData": { "h1": "Villa in Vendita in Traversa Ottava Villaggio Sereno 61 a Brescia" } },
+    "price": { "value": 85485, "min": 85485, "max": 85485, "isSingleValue": true },
+    "size": { "value": 120 },
+    "rooms": { "value": 5 },
+    "floor": { "value": "piano terra" },
+    "mainFeatures": { "size": "120", "rooms": "5", "baths": 1, "level": "piano terra" },
+    "energyClass": { "class": "G" },
+    "address": {
+      "town": "Brescia",
+      "province": "BS",
+      "zone": "Villaggio Sereno, Chiesanuova",
+      "block": "Villaggio Sereno",
+      "lat": 45.509707,
+      "lon": 10.188572
+    },
+    "features": {
+      "featureLists": [
+        {
+          "name": "features",
+          "items": [
+            { "label": "Superficie", "values": [{ "main": "120 m²" }] },
+            { "label": "Locali", "values": [5] },
+            { "label": "Bagni", "values": [1] },
+            { "label": "Piano", "values": [{ "main": "piano terra", "integrative": "" }] },
+            { "label": "Numero piani edificio", "values": [2] },
+            { "label": "Altre caratteristiche", "values": ["giardino privato"] }
+          ]
+        },
+        {
+          "name": "energyInfos",
+          "items": [
+            { "label": "Condizioni immobile", "values": ["abitabile"] },
+            { "label": "Riscaldamento", "values": ["autonomo"] },
+            { "label": "Classe energetica", "values": [{ "main": { "value": "G" } }] }
+          ]
+        },
+        {
+          "name": "priceInfos",
+          "items": [{ "label": "Base d'asta", "values": [{ "main": { "value": "85.485", "munitBefore": "€" } }] }]
+        }
+      ]
+    },
+    "description": {
+      "it": {
+        "text": "Porzione di villetta bifamiliare con giardino al piano terreno (classica costruzione dei villaggi di Padre Marcolini), composta a piano terra da soggiorno, cucina, box e scala per accedere al piano intermedio e primo; al piano intermedio si trova una camera, al piano primo si trovano due camere ed un bagno."
+      }
+    }
+  },
+  "newBuild": {
+    "id": 54946890,
+    "channel": "vendita",
+    "isAuction": false,
+    "propertyType": { "label": "Nuova costruzione", "value": "nuova-costruzione" },
+    "helmetData": { "seoData": { "h1": "Nuova costruzione in Vendita in Via Roncadelle a Roncadelle" } },
+    "price": { "value": null, "min": 280000, "max": 417000, "isSingleValue": false },
+    "size": { "value": null },
+    "rooms": { "value": null },
+    "floor": { "value": "non indicato" },
+    "mainFeatures": { "size": null, "rooms": null, "baths": null, "level": null },
+    "energyClass": { "class": "A4" },
+    "address": {
+      "town": "Roncadelle",
+      "province": "BS",
+      "zone": null,
+      "block": null,
+      "lat": 45.520167,
+      "lon": 10.145914
+    },
+    "features": {
+      "featureLists": [
+        {
+          "name": "features",
+          "items": [{ "label": "Ascensore", "values": ["no"] }]
+        },
+        {
+          "name": "energyInfos",
+          "items": [
+            { "label": "Condizioni immobile", "values": ["nuovo"] },
+            { "label": "Anno di costruzione", "values": ["2025"] },
+            { "label": "Classe energetica", "values": [{ "main": { "value": "A4" } }] }
+          ]
+        },
+        {
+          "name": "priceInfos",
+          "items": [{ "label": "Prezzo", "values": [{ "main": { "value": "280.000 - 417.000", "munitBefore": "€" } }] }]
+        }
+      ]
+    },
+    "description": {
+      "it": {
+        "text": "Nuovi esclusivi trilocali e quadrilocali Classe A4 di varie metrature e caratteristiche.\nLe soluzioni, al piano terra con giardino privato o al piano superiore con ampie balconate, spaziosi box.\nPalazzina di 6 unità (3 al piano terra e 3 al primo e ultimo piano) o palazzina con ascensore di 9 unità."
+      }
+    }
+  }
+}

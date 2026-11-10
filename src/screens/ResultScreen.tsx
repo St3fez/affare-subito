@@ -70,7 +70,8 @@ export function ResultScreen({
 
   const unverified = [
     ["la provvigione dell'agenzia", analysisDeps.fiscal.agencyPct],
-    ["l'onorario del notaio", analysisDeps.fiscal.notaryEstimate],
+    ["l'onorario del notaio", analysisDeps.fiscal.notaryDeedBase],
+    ["le spese della banca per il mutuo", analysisDeps.fiscal.bankFees],
     ["il costo dei lavori", analysisDeps.costs.renovationPerSqm.medio],
     ["il costo dell'arredo", analysisDeps.costs.furnishing.airbnbPerSqm],
   ].filter(([, param]) => (param as { verifiedAt: string | null }).verifiedAt === null).map(([label]) => label as string);
@@ -182,10 +183,25 @@ export function ResultScreen({
         />
         <Divider />
         <Row label="Prezzo richiesto" value={formatCurrency(price)} />
-        <Row label="Imposta di registro" value={formatCurrency(acquisition.registro)} note="Calcolata sul prezzo: è una stima per eccesso" />
+        <Row
+          label="Imposta di registro"
+          value={formatCurrency(acquisition.registro)}
+          note="Calcolata sul prezzo: è una stima per eccesso, perché si può pagare sul valore catastale (prezzo-valore), di solito più basso"
+        />
         <Row label="Imposte ipotecaria e catastale" value={formatCurrency(acquisition.ipotecariaCatastale)} />
-        <Row label="Notaio" value={formatCurrency(acquisition.notary)} note="Stima" />
+        <Row label="Notaio per il rogito" value={formatCurrency(acquisition.notary)} note="Stima, IVA compresa: chiedi un preventivo" />
         <Row label="Agenzia" value={formatCurrency(acquisition.agency)} note="Stima, IVA compresa" />
+        {acquisition.mortgageNotary > 0 ? (
+          <>
+            <Row
+              label="Mutuo: imposta sostitutiva"
+              value={formatCurrency(acquisition.mortgageTax)}
+              note={settings.firstHome ? "0,25% del mutuo (prima casa)" : "2% del mutuo (non prima casa)"}
+            />
+            <Row label="Mutuo: notaio" value={formatCurrency(acquisition.mortgageNotary)} note="Stima, IVA compresa" />
+            <Row label="Mutuo: perizia e istruttoria" value={formatCurrency(acquisition.bankFees)} note="Stima: dipende dalla banca" />
+          </>
+        ) : null}
         <Row
           label="Lavori"
           value={formatCurrency(analysis.renovation)}
